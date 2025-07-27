@@ -1,3 +1,6 @@
+<?php
+session_start();
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -146,13 +149,29 @@
             <span>St. Stephen C.O.U</span>
         </div>
         <ul class="nav-links">
-            <li><a href="index">Home</a></li>
+            <li><a href="home">Home</a></li>
             <li><a href="about" class="active">About</a></li>
             <li><a href="events">Events</a></li>
             <li><a href="ministries">Ministries</a></li>
             <li><a href="forum">Forum</a></li>
             <li><a href="contact">Contact</a></li>
-            <li><a href="login" class="login-btn">Login</a></li>
+              <?php
+            if (isset($_SESSION['admin']) && $_SESSION['admin'] === true) {
+                echo '<li><a href="dashboard" class="dashboard-btn">My Dashboard</a></li>
+                <li><a href="logout" class="login-btn">Logout</a></li>
+                ';
+            } elseif (isset($_SESSION['clergy']) && $_SESSION['clergy'] === true) {
+                echo '<li><a href="clergy-dashboard" class="dashboard-btn">My Dashboard</a></li>
+                <li><a href="logout" class="login-btn">Logout</a></li>
+                ';
+            } elseif (isset($_SESSION['member']) && $_SESSION['member'] === true) {
+                echo '<li><a href="member-dashboard" class="dashboard-btn">My Dashboard</a></li>
+                <li><a href="logout" class="login-btn">Logout</a></li>
+                ';
+            } else {
+                echo '<li><a href="login" class="login-btn">Login</a></li>';
+            }
+            ?>
         </ul>
         <div class="hamburger">
             <div class="line"></div>

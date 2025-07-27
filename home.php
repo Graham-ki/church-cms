@@ -1,5 +1,6 @@
 <?php
-session_start();?>
+session_start();
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -17,13 +18,13 @@ session_start();?>
             <span>St. Stephen C.O.U</span>
         </div>
         <ul class="nav-links">
-            <li><a href="home" class="active">Home</a></li>
+            <li><a href="index" class="active">Home</a></li>
             <li><a href="about-us">About</a></li>
             <li><a href="events">Events</a></li>
             <li><a href="ministries">Ministries</a></li>
             <li><a href="forum">Forum</a></li>
             <li><a href="contact">Contact</a></li>
-              <?php
+            <?php
             if (isset($_SESSION['admin']) && $_SESSION['admin'] === true) {
                 echo '<li><a href="dashboard" class="dashboard-btn">My Dashboard</a></li>
                 <li><a href="logout" class="login-btn">Logout</a></li>

@@ -1,3 +1,6 @@
+<?php
+include_once 'includes/functions.php';
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -198,19 +201,19 @@
             <img src="public/images/logo.png" alt="Church Logo" class="login-logo">
             <h1 class="login-title">Member Login</h1>
             
-            <form>
+            <form action="includes/functions.php" method="POST">
                 <div class="input-group">
                     <i class="fas fa-envelope"></i>
-                    <input type="email" class="login-input" placeholder="Email Address" required>
+                    <input type="email" class="login-input" name="email" placeholder="Email Address" required>
                 </div>
                 
                 <div class="input-group">
                     <i class="fas fa-lock"></i>
-                    <input type="password" class="login-input" placeholder="Password" required>
+                    <input type="password" class="login-input" placeholder="Password" required name="password">
                 </div>
                 <div class="input-group">
                     <i class="fas fa-check"></i>
-                  <select class="login-input" required>
+                  <select class="login-input" name="role" required>
                     <option value="" disabled selected>Role</option>
                     <option value="member" style="color: green;">Member</option>
                     <option value="admin" style="color: blue;">Admin</option>
@@ -224,7 +227,7 @@
                     <a href="forgot-password.html" class="forgot-password">Forgot password?</a>
                 </div>
                 
-                <button type="submit" class="login-btn">Login <i class="fas fa-sign-in-alt"></i></button>
+                <button type="submit" class="login-btn" name="login">Login <i class="fas fa-sign-in-alt"></i></button>
                 <div class="register-link">
                     Don't have an account? <a href="register">Register here</a>
                 </div>
