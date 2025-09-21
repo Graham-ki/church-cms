@@ -88,13 +88,13 @@ if (isset($_POST['add-event'])) {
     $event_venue       = $_POST['location'];
     $event_description = $_POST['description'];
     $event_category    = $_POST['event_category'];
-    $created_by        = 'Admin'; // Placeholder, replace with actual user info
+    $created_by        = 'Admin'; 
     $target_audience   = implode(", ", $_POST['target_audience']); 
 
     // ---------- Handle image upload ----------
     $event_image = "";
     if (isset($_FILES['event_image']) && $_FILES['event_image']['error'] == 0) {
-        $targetDir  = "../uploads/events/"; // make sure this folder exists & is writable
+        $targetDir  = "../uploads/events/"; 
         $fileName   = time() . "_" . basename($_FILES["event_image"]["name"]);
         $targetFile = $targetDir . $fileName;
 
@@ -103,7 +103,7 @@ if (isset($_POST['add-event'])) {
         $fileType = strtolower(pathinfo($targetFile, PATHINFO_EXTENSION));
         if (in_array($fileType, $allowedTypes)) {
             if (move_uploaded_file($_FILES["event_image"]["tmp_name"], $targetFile)) {
-                $event_image = $fileName; // save only filename to DB
+                $event_image = $fileName; 
             } else {
                 echo "<script>alert('Failed to upload image.');</script>";
             }
@@ -142,7 +142,7 @@ if (isset($_POST['add-ministry'])) {
     // ---------- Handle image upload ----------
     $relevant_image = "";
     if (isset($_FILES['relevant_image']) && $_FILES['relevant_image']['error'] == 0) {
-        $targetDir  = "../uploads/ministries/"; // make sure this folder exists & is writable
+        $targetDir  = "../uploads/ministries/"; 
         $fileName   = time() . "_" . basename($_FILES["relevant_image"]["name"]);
         $targetFile = $targetDir . $fileName;
 
@@ -151,7 +151,7 @@ if (isset($_POST['add-ministry'])) {
         $fileType = strtolower(pathinfo($targetFile, PATHINFO_EXTENSION));
         if (in_array($fileType, $allowedTypes)) {
             if (move_uploaded_file($_FILES["relevant_image"]["tmp_name"], $targetFile)) {
-                $relevant_image = $fileName; // save only filename to DB
+                $relevant_image = $fileName; // 
             } else {
                 echo "<script>alert('Failed to upload image.');</script>";
             }
