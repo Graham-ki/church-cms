@@ -125,3 +125,51 @@ if (isset($_POST['add-event'])) {
         echo "<script>alert('Error: " . $conn->error . "');</script>";      
     }    
 }
+
+// Add ministry
+if (isset($_POST['add-ministry'])) {    
+    $ministry_name        = $_POST['ministry_name'];
+    //$ministry_type        = $_POST['ministry_type'];
+    //$relevant_image       = $_POST['relevant_image'];
+    $day                  = $_POST['day'];
+    $time                 = $_POST['time'];
+    $age_group            = $_POST['age_group'];
+    $leader               = $_POST['leader'];
+    $description          = $_POST['description'];
+    $created_by           = 'Admin'; // Placeholder, replace with actual user info
+    
+
+    // ---------- Handle image upload ----------
+    $relevant_image = "";
+    if (isset($_FILES['relevant_image']) && $_FILES['relevant_image']['error'] == 0) {
+        $targetDir  = "../uploads/ministries/"; // make sure this folder exists & is writable
+        $fileName   = time() . "_" . basename($_FILES["relevant_image"]["name"]);
+        $targetFile = $targetDir . $fileName;
+
+        // Optional: validate file type
+        $allowedTypes = ['jpg', 'jpeg', 'png', 'gif'];
+        $fileType = strtolower(pathinfo($targetFile, PATHINFO_EXTENSION));
+        if (in_array($fileType, $allowedTypes)) {
+            if (move_uploaded_file($_FILES["relevant_image"]["tmp_name"], $targetFile)) {
+                $relevant_image = $fileName; // save only filename to DB
+            } else {
+                echo "<script>alert('Failed to upload image.');</script>";
+            }
+        } else {
+            echo "<script>alert('Invalid image format. Only JPG, PNG, GIF allowed.');</script>";
+        }
+    }
+
+    // ---------- Insert into DB ----------
+    $sql = "INSERT INTO ministries 
+            (name,image,day,time,age_range, leader,description,created_by) 
+            VALUES 
+            ('$ministry_name', '$relevant_image', '$day', '$time', '$age_group', '$leader', '$description', '$created_by')";
+
+    if ($conn->query($sql) === TRUE) {
+        echo "<script>alert('Ministry added successfully!');</script>";
+        echo "<script>window.location.href = '../dashboard/ministries.php';</script>";
+    } else {
+        echo "<script>alert('Error: " . $conn->error . "');</script>";      
+    }    
+}

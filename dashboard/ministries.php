@@ -164,44 +164,47 @@
                     <button class="btn btn-sm" id="cancel-add-sacrament">Cancel</button>
                 </div>
                 
-                <form class="sacrament-form" method="post" enctype="multipart/form-data">
+                <form class="sacrament-form" method="post" enctype="multipart/form-data" action="../includes/functions.php">
                     <div class="form-group">
                         <label>Ministry Type</label>
-                        <select class="form-control">
+                        <select class="form-control" name="ministry_name" required>
                             <option value="">Select ministry...</option>
-                            <option value="youth-ministry">Youth Ministry</option>
-                            <option value="children-ministry">Children Ministry</option>
-                            <option value="confirmation">Women's Ministry</option>
-                            <option value="matrimony">Men's Ministry</option>
-                            <option value="holy-orders">Worship Ministry</option>
-                            <option value="reconciliation">Outreach Ministry</option>
+                            <option value="Youth Ministry">Youth Ministry</option>
+                            <option value="Children Ministry">Children Ministry</option>
+                            <option value="Womens Ministry">Women's Ministry</option>
+                            <option value="Mens Ministry">Men's Ministry</option>
+                            <option value="Worship Ministry">Worship Ministry</option>
+                            <option value="Outreach Ministry">Outreach Ministry</option>
                         </select>
                     </div>
-                    
+                    <div class="form-group">
+                        <label>Relevant Image</label>
+                        <input type="file" class="form-control" name="relevant_image" required>
+                    </div>
                     <div class="form-group">
                         <label>Day</label>
-                        <input type="text" class="form-control" placeholder="Day of the week">
+                        <input type="text" class="form-control" name="day" placeholder="Day of the week" required>
                     </div>
                     <div class="form-group">
                         <label>Time</label>
-                        <input type="text" class="form-control" placeholder="Time of the ministry">
+                        <input type="text" class="form-control" name="time" placeholder="Time of the ministry" required>
                     </div>
                     <div class="form-group">
                         <label>Age Group</label>
-                        <input type="text" class="form-control" placeholder="Age group for the ministry">
+                        <input type="text" class="form-control" name="age_group" placeholder="Age group for the ministry" required>
                     </div>
                     <div class="form-group full-width">
                         <label>Leader</label>
-                        <input type="text" class="form-control" placeholder="Name of ministry leader">
+                        <input type="text" class="form-control" name="leader" placeholder="Name of ministry leader" required>
                     </div>
                     <div class="form-group full-width">
                         <label>Description</label>
-                        <textarea class="form-control" rows="3" placeholder="Additional notes about the ministry"></textarea>
+                        <textarea class="form-control" rows="3" name="description" placeholder="Additional notes about the ministry"></textarea>
                     </div>
                     
-                    <div class="form-group full-width" style="text-align: right;">
+                    <div class="form-group full-width" style="text-align: right;">  
                         <button type="button" class="btn"><i class="fas fa-save"></i> Save Draft</button>
-                        <button type="submit" class="btn btn-accent"><i class="fas fa-check"></i> Save Record</button>
+                        <button name="add-ministry" type="submit" class="btn btn-accent"><i class="fas fa-check"></i> Save Record</button>
                     </div>
                 </form>
             </div>
