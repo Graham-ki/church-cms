@@ -1,5 +1,5 @@
 <?php
-include_once 'includes/functions.php';
+include_once 'config/db.php';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -217,7 +217,7 @@ include_once 'includes/functions.php';
                     <option value="" disabled selected>Role</option>
                     <option value="member" style="color: green;">Member</option>
                     <option value="admin" style="color: blue;">Admin</option>
-                    <option value="guest" style="color: orange;">Clergy</option>
+                    <option value="clergy" style="color: orange;">Clergy</option>
                   </select>
                 </div>
                 <div class="remember-forgot">

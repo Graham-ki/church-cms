@@ -185,61 +185,53 @@
             <img src="public/images/logo.png" alt="Church Logo" class="register-logo">
             <h1 class="register-title">Create Account</h1>
             
-            <form>
-                <div class="member-type">
-                    <div class="member-option">
-                        <input type="radio" id="new-member" name="member-type" value="new" checked>
-                        <label for="new-member">
-                            <i class="fas fa-user-plus"></i>
-                            New Member
-                        </label>
-                    </div>
-                    <div class="member-option">
-                        <input type="radio" id="existing-member" name="member-type" value="existing">
-                        <label for="existing-member">
-                            <i class="fas fa-user-check"></i>
-                            Existing Member
-                        </label>
-                    </div>
-                </div>
+            <form action="includes/functions" method="POST">
                 
                 <div class="form-row">
                     <div class="input-group">
                         <i class="fas fa-user"></i>
-                        <input type="text" class="register-input" placeholder="First Name" required>
+                        <input type="text" class="register-input" placeholder="First Name" name="first_name" required>
                     </div>
                     <div class="input-group">
                         <i class="fas fa-user"></i>
-                        <input type="text" class="register-input" placeholder="Last Name" required>
+                        <input type="text" class="register-input" placeholder="Last Name" name="last_name" required>
                     </div>
                 </div>
-                
+                <div class="form-row">
+                    <div class="input-group">
+                        <i class="fas fa-venus-mars"></i>
+                        <input type="text" class="register-input" placeholder="Gender" name="gender" required>
+                    </div>
+                    <div class="input-group">
+                        
+                        <i class="fas fa-calendar-alt"></i>
+                        <input type="date" class="register-input" placeholder="Date joined" name="date_joined" required>
+                    </div>
+                </div>
                 <div class="input-group">
                     <i class="fas fa-envelope"></i>
-                    <input type="email" class="register-input" placeholder="Email Address" required>
+                    <input name="email" type="email" class="register-input" placeholder="Email Address" required>
                 </div>
-                
+                <div class="input-group">
+                    <i class="fas fa-home"></i>
+                    <input name="address" type="text" class="register-input" placeholder="Physical Address" required>
+                </div>
                 <div class="input-group">
                     <i class="fas fa-phone"></i>
-                    <input type="tel" class="register-input" placeholder="Phone Number" required>
+                    <input name="phone" type="tel" class="register-input" placeholder="Phone Number" required>
                 </div>
                 
                 <div class="input-group">
                     <i class="fas fa-lock"></i>
-                    <input type="password" class="register-input" placeholder="Create Password" required>
+                    <input name="password" type="password" class="register-input" placeholder="Create Password" required>
                 </div>
                 
                 <div class="input-group">
                     <i class="fas fa-lock"></i>
-                    <input type="password" class="register-input" placeholder="Confirm Password" required>
+                    <input name="confirm_password" type="password" class="register-input" placeholder="Confirm Password" required>
                 </div>
-                
-               <!-- <div class="terms-agreement">
-                    <input type="checkbox" id="terms" required>
-                    <label for="terms">I agree to the <a href="terms.html">Terms of Service</a> and <a href="privacy.html">Privacy Policy</a></label>
-                </div>-->
-                
-                <button type="submit" class="register-btn">Register <i class="fas fa-user-plus"></i></button>
+               
+                <button name="register" type="submit" class="register-btn">Register <i class="fas fa-user-plus"></i></button>
                 
                 <div class="login-link">
                     Already have an account? <a href="login">Login here</a>

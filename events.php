@@ -1,5 +1,6 @@
 <?php
 session_start();
+include_once 'config/db.php';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -251,7 +252,7 @@ session_start();
     <section class="events-container">
         <div class="container">
             <h2 class="section-title">Upcoming Events</h2>
-            <p class="section-subtitle">Find opportunities to connect, grow, and serve</p>
+            <p class="section-subtitle" style ="text-align: center;">Find opportunities to connect, grow, and serve. Visit your dashboard for more details</p><br>
             
             <div class="events-filter">
                 <button class="filter-btn active" data-filter="all">All Events</button>
@@ -264,7 +265,44 @@ session_start();
             
             <div class="events-grid">
                 <!-- Event 1 -->
-                <div class="event-card-large" data-category="worship">
+                 <?php
+                 $events = $conn->query("SELECT * FROM events WHERE category = 'Worship' ORDER BY start_date ASC");
+                 while(mysqli_num_rows($events) > 0 && $event = mysqli_fetch_assoc($events)){
+                    $startDate = date('d M', strtotime($event['start_date']));
+                    $day = date('d', strtotime($event['start_date']));
+                    $month = date('M', strtotime($event['start_date']));
+                    $startTime = date('g:i A', strtotime($event['start_time']));
+                    $endTime = date('g:i A', strtotime($event['end_time']));
+                    $location = htmlspecialchars($event['location']);
+                    $description = htmlspecialchars($event['description']);
+                    $title = htmlspecialchars($event['title']);
+                    $category = htmlspecialchars($event['category']);
+                    $image = htmlspecialchars($event['image']);
+                    echo '
+                    <div class="event-card-large" data-category="worship">
+                    <div class="event-image-large" style="background-image: url(\'uploads/events/'.$image.'\');">
+                        <div class="event-date-large">
+                            <span class="day">'.$day.'</span>
+                            <span class="month">'.$month.'</span>
+                        </div>    
+                    </div>
+                    <div class="event-details">
+                        <span class="event-category">'.$category.'</span>
+                        <h3>'.$title.'</h3>
+                        <div class="event-time">
+                            <i class="far fa-clock"></i> '.$startTime.' - '.$endTime.'
+                        </div>
+                        <div class="event-time">
+                            <i class="fas fa-map-marker-alt"></i> '.$location.'
+                        </div>
+                        <p class="event-desc">'.$description.'</p>
+                        
+                    </div>  
+                </div>
+                    ';      
+                 }
+                 ?>
+                <!--<div class="event-card-large" data-category="worship">
                     <div class="event-image-large" style="background-image: url('public/images/sunday-service.jpeg');">
                         <div class="event-date-large">
                             <span class="day">15</span>
@@ -286,10 +324,47 @@ session_start();
                             <a href="#" class="event-link">Add to Calendar <i class="far fa-calendar-plus"></i></a>
                         </div>
                     </div>
-                </div>
-                
+                </div>-->
+
                 <!-- Event 2 -->
-                <div class="event-card-large" data-category="bible">
+                 <?php
+                 $events = $conn->query("SELECT * FROM events WHERE category = 'Bible Study' ORDER BY start_date ASC");
+                 while(mysqli_num_rows($events) > 0 && $event = mysqli_fetch_assoc($events)){
+                    $startDate = date('d M', strtotime($event['start_date']));
+                    $day = date('d', strtotime($event['start_date']));
+                    $month = date('M', strtotime($event['start_date']));
+                    $startTime = date('g:i A', strtotime($event['start_time']));
+                    $endTime = date('g:i A', strtotime($event['end_time']));
+                    $location = htmlspecialchars($event['location']);
+                    $description = htmlspecialchars($event['description']);
+                    $title = htmlspecialchars($event['title']);
+                    $category = htmlspecialchars($event['category']);
+                    $image = htmlspecialchars($event['image']);
+                    echo '
+                    <div class="event-card-large" data-category="bible">
+                    <div class="event-image-large" style="background-image: url(\'uploads/events/'.$image.'\');">
+                        <div class="event-date-large">
+                            <span class="day">'.$day.'</span>
+                            <span class="month">'.$month.'</span>
+                        </div>
+                    </div>
+                    <div class="event-details">
+                        <span class="event-category">'.$category.'</span>
+                        <h3>'.$title.'</h3>
+                        <div class="event-time">
+                            <i class="far fa-clock"></i> '.$startTime.' - '.$endTime.'
+                        </div>
+                        <div class="event-time">
+                            <i class="fas fa-map-marker-alt"></i> '.$location.'
+                        </div>
+                        <p class="event-desc">'.$description.'</p>
+                        
+                    </div>
+                </div>
+                    ';      
+                 }
+                 ?>
+                <!--<div class="event-card-large" data-category="bible">
                     <div class="event-image-large" style="background-image: url('public/images/bible-study.jpeg');">
                         <div class="event-date-large">
                             <span class="day">17</span>
@@ -311,10 +386,46 @@ session_start();
                             <a href="#" class="event-link">Add to Calendar <i class="far fa-calendar-plus"></i></a>
                         </div>
                     </div>
-                </div>
+                </div>-->
                 
                 <!-- Event 3 -->
-                <div class="event-card-large" data-category="youth">
+                 <?php
+                 $events = $conn->query("SELECT * FROM events WHERE category = 'Youth' ORDER BY start_date ASC");                 
+                 while(mysqli_num_rows($events) > 0 && $event = mysqli_fetch_assoc($events)){
+                    $startDate = date('d M', strtotime($event['start_date']));
+                    $day = date('d', strtotime($event['start_date']));
+                    $month = date('M', strtotime($event['start_date']));
+                    $startTime = date('g:i A', strtotime($event['start_time']));
+                    $endTime = date('g:i A', strtotime($event['end_time']));
+                    $location = htmlspecialchars($event['location']);
+                    $description = htmlspecialchars($event['description']);
+                    $title = htmlspecialchars($event['title']);
+                    $category = htmlspecialchars($event['category']);
+                    $image = htmlspecialchars($event['image']);
+                    echo '
+                    <div class="event-card  large" data-category="youth">                                                                                                                                                    
+                    <div class="event-image" style="background-image: url(\'uploads/events/'.$image.'\');">                   
+                        <div class="event-date                              -large">                            
+                            <span class="day">'.$day.'</span>                            
+                            <span class="month">'.$month.'</span>                            
+                        </div>                        
+                    </div>                    
+                    <div class="event-details">                    
+                        <span class="event-category">'.$category.'</span>                    
+                        <h3>'.$title.'</h3>                    
+                        <div class="event-time">                    
+                            <i class="far fa-clock"></i> '.$startTime.' - '.$endTime.'                    
+                        </div>                    
+                        <div class="event-time">                    
+                            <i class="fas fa-map-marker-alt"></i> '.$location.'                    
+                        </div>                    
+                        <p class="event-desc">'.$description.'</p>                    
+                                            
+                    </div>                
+                </div>
+                    ';  
+                 }?>
+                <!--<div class="event-card-large" data-category="youth">
                     <div class="event-image-large" style="background-image: url('public/images/game-night.jpeg');">
                         <div class="event-date-large">
                             <span class="day">20</span>
@@ -336,10 +447,46 @@ session_start();
                             <a href="#" class="event-link">Add to Calendar <i class="far fa-calendar-plus"></i></a>
                         </div>
                     </div>
-                </div>
+                </div>-->
                 
                 <!-- Event 4 -->
-                <div class="event-card-large" data-category="community">
+                 <?php
+                 $events = $conn->query("SELECT * FROM events WHERE category = 'Community' ORDER BY start_date ASC");                 
+                 while(mysqli_num_rows($events) > 0 && $event = mysqli_fetch_assoc($events)){
+                    $startDate = date('d M', strtotime($event['start_date']));
+                    $day = date('d', strtotime($event['start_date']));
+                    $month = date('M', strtotime($event['start_date']));
+                    $startTime = date('g:i A', strtotime($event['start_time']));
+                    $endTime = date('g:i A', strtotime($event['end_time']));
+                    $location = htmlspecialchars($event['location']);
+                    $description = htmlspecialchars($event['description']);
+                    $title = htmlspecialchars($event['title']);
+                    $category = htmlspecialchars($event['category']);
+                    $image = htmlspecialchars($event['image']);
+                    echo '
+                    <div class="event-card-large" data-category="community">
+                    <div class="event-image-large" style="background-image: url(\'uploads/events/'.$image.'\');">
+                        <div class="event-date-large">
+                            <span class="day">'.$day.'</span>
+                            <span class="month">'.$month.'</span>
+                        </div>
+                    </div>                    
+                    <div class="event-details">                    
+                        <span class="event-category">'.$category.'</span>                    
+                        <h3>'.$title.'</h3>                    
+                        <div class="event-time">                    
+                            <i class="far fa-clock"></i> '.$startTime.' - '.$endTime.'                    
+                        </div>                    
+                        <div class="event-time">                    
+                            <i class="fas fa-map-marker-alt"></i> '.$location.'                    
+                        </div>                    
+                        <p class="event-desc">'.$description.'</p>                    
+                                           
+                    </div>                
+                </div>
+                    ';
+                 }?>
+                <!--<div class="event-card-large" data-category="community">
                     <div class="event-image-large" style="background-image: url('public/images/outreach.jpeg');">
                         <div class="event-date-large">
                             <span class="day">22</span>
@@ -361,10 +508,46 @@ session_start();
                             <a href="#" class="event-link">Add to Calendar <i class="far fa-calendar-plus"></i></a>
                         </div>
                     </div>
-                </div>
+                </div>-->
                 
                 <!-- Event 5 -->
-                <div class="event-card-large" data-category="special">
+                 <?php
+                 $events = $conn->query("SELECT * FROM events WHERE category = 'Special Events' ORDER BY start_date ASC");                 
+                 while(mysqli_num_rows($events) > 0 && $event = mysqli_fetch_assoc($events)){
+                    $startDate = date('d M', strtotime($event['start_date']));
+                    $day = date('d', strtotime($event['start_date']));
+                    $month = date('M', strtotime($event['start_date']));
+                    $startTime = date('g:i A', strtotime($event['start_time']));
+                    $endTime = date('g:i A', strtotime($event['end_time']));
+                    $location = htmlspecialchars($event['location']);
+                    $description = htmlspecialchars($event['description']);
+                    $title = htmlspecialchars($event['title']);
+                    $category = htmlspecialchars($event['category']);
+                    $image = htmlspecialchars($event['image']);
+                    echo '
+                    <div class="event-card-large" data-category="special">
+                    <div class="event-image-large" style="background-image: url(\'uploads/events/'.$image.'\');">
+                        <div class="event-date-large">
+                            <span class="day">'.$day.'</span>
+                            <span class="month">'.$month.'</span>
+                        </div>
+                    </div>                    
+                    <div class="event-details">                    
+                        <span class="event-category">'.$category.'</span>                    
+                        <h3>'.$title.'</h3>                    
+                        <div class="event-time">                    
+                            <i class="far fa-clock"></i> '.$startTime.' - '.$endTime.'                    
+                        </div>                    
+                        <div class="event-time">                    
+                            <i class="fas fa-map-marker-alt"></i> '.$location.'                    
+                        </div>                    
+                        <p class="event-desc">'.$description.'</p>                    
+                                           
+                    </div>                
+                </div>
+                    ';  
+                 }?>
+                <!--<div class="event-card-large" data-category="special">
                     <div class="event-image-large" style="background-image: url('public/images/wedding.jpeg');">
                         <div class="event-date-large">
                             <span class="day">29</span>
@@ -386,9 +569,9 @@ session_start();
                             <a href="#" class="event-link">Add to Calendar <i class="far fa-calendar-plus"></i></a>
                         </div>
                     </div>
-                </div>
+                </div>-->
                 
-                <!-- Event 6 -->
+                <!-- Event 6 
                 <div class="event-card-large" data-category="worship">
                     <div class="event-image-large" style="background-image: url('public/images/prayer-night.jpeg');">
                         <div class="event-date-large">
@@ -411,7 +594,7 @@ session_start();
                             <a href="#" class="event-link">Add to Calendar <i class="far fa-calendar-plus"></i></a>
                         </div>
                     </div>
-                </div>
+                </div>-->
             </div>
         </div>
     </section>

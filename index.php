@@ -14,7 +14,7 @@ session_start();?>
     <nav class="glass-nav">
         <div class="logo">
             <img src="public/images/logo.png" alt="Church Logo">
-            <span>St. Stephen C.O.U</span>
+            <span>St. Stephen </span>
         </div>
         <ul class="nav-links">
             <li><a href="home" class="active">Home</a></li>
@@ -55,21 +55,21 @@ session_start();?>
                 <div class="slide-content">
                     <h1>Welcome to St. Stephen C.O.U</h1>
                     <p>Join us in worship and fellowship every Sunday at 9:00 AM</p>
-                    <a href="#" class="btn">Learn More</a>
+                    <a href="service-schedule" class="btn">Learn More</a>
                 </div>
             </div>
             <div class="slide">
                 <div class="slide-content">
                     <h1>Growing Together in Faith</h1>
                     <p>Discover our Bible study groups and spiritual growth programs</p>
-                    <a href="#" class="btn">Join a Group</a>
+                    <a href="forum" class="btn">Join a Group</a>
                 </div>
             </div>
             <div class="slide">
                 <div class="slide-content">
                     <h1>Serving Our Community</h1>
                     <p>Find out how you can participate in our outreach programs</p>
-                    <a href="#" class="btn">Volunteer</a>
+                    <a href="events" class="btn">Volunteer</a>
                 </div>
             </div>
             <div class="slide-controls">
@@ -100,39 +100,6 @@ session_start();?>
                     <h3>Youth Bible Study</h3>
                     <p class="event-location"><i class="fas fa-map-marker-alt"></i> Church Hall</p>
                     <p class="event-desc">Join our weekly youth Bible study session for spiritual growth and fellowship.</p>
-                    <a href="#" class="event-link">View Details <i class="fas fa-arrow-right"></i></a>
-                </div>
-            </div>
-            
-            <div class="event-card glass-card">
-                <div class="event-image">
-                    <img src="public/images/event2.jpg" alt="Community Outreach">
-                    <div class="event-date">
-                        <span class="day">22</span>
-                        <span class="month">JUL</span>
-                    </div>
-                </div>
-                <div class="event-info">
-                    <h3>Community Outreach</h3>
-                    <p class="event-location"><i class="fas fa-map-marker-alt"></i> Kumi Town</p>
-                    <p class="event-desc">Help us serve the less fortunate in our community through this outreach program.</p>
-                    <a href="#" class="event-link">View Details <i class="fas fa-arrow-right"></i></a>
-                </div>
-            </div>
-            
-            <div class="event-card glass-card">
-                <div class="event-image">
-                    <img src="public/images/event3.jpg" alt="Choir Practice">
-                    <div class="event-date">
-                        <span class="day">29</span>
-                        <span class="month">JUL</span>
-                    </div>
-                </div>
-                <div class="event-info">
-                    <h3>Choir Practice</h3>
-                    <p class="event-location"><i class="fas fa-map-marker-alt"></i> Choir Room</p>
-                    <p class="event-desc">Weekly choir practice for all members. New voices are always welcome!</p>
-                    <a href="#" class="event-link">View Details <i class="fas fa-arrow-right"></i></a>
                 </div>
             </div>
         </div>
@@ -193,7 +160,7 @@ session_start();?>
                 </div>
                 <h3>Support Our Ministry</h3>
                 <p>Your generous donations help us continue our mission and serve the community.</p>
-                <a href="#" class="btn">Donate Now</a>
+                <a href="donations" class="btn">Donate Now</a>
             </div>
             
             <div class="cta-card glass-card">
@@ -202,7 +169,7 @@ session_start();?>
                 </div>
                 <h3>Join Our Church</h3>
                 <p>Become a member of our growing church family and participate in our ministries.</p>
-                <a href="#" class="btn">Register Now</a>
+                <a href="register" class="btn">Register Now</a>
             </div>
         </div>
     </section>
