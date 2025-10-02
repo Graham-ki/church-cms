@@ -1,5 +1,7 @@
 <?php
-session_start();?>
+session_start();
+include_once 'config/db.php';
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -88,7 +90,31 @@ session_start();?>
     <section class="events-section">
         <h2 class="section-title">Upcoming Events</h2>
         <div class="events-container">
-            <div class="event-card glass-card">
+            <?php
+            $sql = "SELECT * FROM events ORDER BY start_date ASC";
+            $result = $conn->query($sql);
+            if ($result->num_rows > 0) {
+                while ($event = $result->fetch_assoc()) {
+                    echo '<div class="event-card glass-card">';
+                    echo '<div class="event-image">';
+                    echo '<img src="uploads/events/' . $event['image'] . '" alt="' . $event['title'] . '">';
+                    echo '<div class="event-date">';
+                    echo '<span class="day">' . date('d', strtotime($event['start_date'])) . '</span>';
+                    echo '<span class="month">' . date('M', strtotime($event['start_date'])) . '</span>';
+                    echo '</div></div>';
+                    echo '<div class="event-info">';
+                    echo '<h3>' . $event['title'] . '</h3>';
+                    echo '<p class="event-location"><i class="fas fa-map-marker-alt"></i> ' . $event['location'] . '</p>';
+                    echo '<p class="event-time"><i class="fas fa-clock"></i> ' . date('g:i A', strtotime($event['start_time'])) . ' - ' . date('g:i A', strtotime($event['end_time'])) . '</p>';
+                    echo '<p class="event-target-audience"><i class="fas fa-users"></i> ' . $event['target_audience'] . '</p>';
+                    echo '<p class="event-desc">' . $event['description'] . '</p>';
+                    echo '</div></div>';
+                }
+            } else {
+                echo '<p>No upcoming events found.</p>';
+            }
+            ?>
+            <!--<div class="event-card glass-card">
                 <div class="event-image">
                     <img src="public/images/event1.jpg" alt="Bible Study">
                     <div class="event-date">
@@ -101,7 +127,7 @@ session_start();?>
                     <p class="event-location"><i class="fas fa-map-marker-alt"></i> Church Hall</p>
                     <p class="event-desc">Join our weekly youth Bible study session for spiritual growth and fellowship.</p>
                 </div>
-            </div>
+            </div>-->
         </div>
     </section>
 
@@ -110,41 +136,32 @@ session_start();?>
         <h2 class="section-title">Recent Communications</h2>
         <div class="comms-carousel">
             <div class="comms-container">
-                <div class="comm-card glass-card">
+                <?php
+                $sql = "SELECT * FROM communications ORDER BY sent_at DESC";
+                $result = $conn->query($sql);
+                if ($result->num_rows > 0) {
+                    while ($comm = $result->fetch_assoc()) {
+                        echo '<div class="comm-card glass-card">';
+                        echo '<div class="comm-header">';
+                        echo '<h3>' . $comm['title'] . '</h3>';
+                        echo '<span class="comm-date">' . date('F j, Y', strtotime($comm['sent_at'])) . '</span>';
+                        echo '</div>';
+                        echo '<p>' . $comm['message'] . '</p>';
+                        echo '<a href="index.php?comm_id=' . $comm['id'] . '" class="comm-link">Read More <i class="fas fa-arrow-right"></i></a>';
+                        echo '</div>';
+                    }
+                } else {
+                    echo '<p>No recent communications found.</p>';
+                }
+                ?>
+                <!--<div class="comm-card glass-card">
                     <div class="comm-header">
                         <h3>Sunday Service Update</h3>
                         <span class="comm-date">July 10, 2025</span>
                     </div>
                     <p>This Sunday's service will feature a special guest speaker from Kumi Diocese. All members are encouraged to attend.</p>
                     <a href="#" class="comm-link">Read More <i class="fas fa-arrow-right"></i></a>
-                </div>
-                
-                <div class="comm-card glass-card">
-                    <div class="comm-header">
-                        <h3>Building Fund Progress</h3>
-                        <span class="comm-date">July 3, 2025</span>
-                    </div>
-                    <p>We've reached 65% of our building fund goal! Thank you for your generous contributions.</p>
-                    <a href="#" class="comm-link">Read More <i class="fas fa-arrow-right"></i></a>
-                </div>
-                
-                <div class="comm-card glass-card">
-                    <div class="comm-header">
-                        <h3>Vacation Bible School</h3>
-                        <span class="comm-date">June 26, 2025</span>
-                    </div>
-                    <p>Registration is now open for our annual Vacation Bible School program for children ages 5-12.</p>
-                    <a href="#" class="comm-link">Read More <i class="fas fa-arrow-right"></i></a>
-                </div>
-                
-                <div class="comm-card glass-card">
-                    <div class="comm-header">
-                        <h3>Pastoral Letter</h3>
-                        <span class="comm-date">June 19, 2025</span>
-                    </div>
-                    <p>A special message from our pastor about spiritual growth during challenging times.</p>
-                    <a href="#" class="comm-link">Read More <i class="fas fa-arrow-right"></i></a>
-                </div>
+                </div>-->
             </div>
             <button class="carousel-prev"><i class="fas fa-chevron-left"></i></button>
             <button class="carousel-next"><i class="fas fa-chevron-right"></i></button>

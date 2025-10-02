@@ -88,44 +88,45 @@ if (isset($_POST['register1'])) {
     }
 }
 // Simple role-based login simulation
+
 if (isset($_POST['login'])) {
-    $role = $_POST['role'];
-    $email = $_POST['email'];
-    $password = $_POST['password'];
-    if ($role == 'member') {
-        $checkUser = "SELECT * FROM members WHERE email = '$email' AND password = '$password'";
-        $result = $conn->query($checkUser); 
-        if ($result->num_rows == 0) {
-            echo "<script>alert('Invalid email or password!');</script>";
-            echo "<script>window.location.href = '../login';</script>";
-            exit;
-        }
-        $_SESSION = ['admin' => false, 'member' => true, 'guest' => false];
-        echo "<script>window.location.href = '../home';</script>";
-    } elseif ($role == 'clergy') {
-        $checkUser1 = "SELECT * FROM users WHERE email = '$email' AND password = '$password'";
-        $result = $conn->query($checkUser1);
-        if ($result->num_rows == 0) {
-            echo "<script>alert('Invalid email or password!');</script>";
-            echo "<script>window.location.href = '../login';</script>";
-            exit;
-        }
-        $_SESSION = ['admin' => false, 'member' => false, 'clergy' => true];
-        echo "<script>window.location.href = '../home';</script>";
-    } elseif ($role == 'admin') {
-        $checkUser2 = "SELECT * FROM users WHERE email = '$email' AND password = '$password'";
-        $result = $conn->query($checkUser2);
-        if ($result->num_rows == 0) {
-            echo "<script>alert('Invalid email or password!');</script>";
-            echo "<script>window.location.href = '../login';</script>";
-            exit;
-        }
-        $_SESSION = ['admin' => true, 'member' => false, 'clergy' => false];
-        echo "<script>window.location.href = '../home';</script>";
+    $role     = $_POST['role'];
+    $email    = trim($_POST['email']);
+    $password = trim($_POST['password']);
+
+    // Decide which table to use
+    if ($role === 'member') {
+        $table = "members";
+    } elseif ($role === 'clergy' || $role === 'admin') {
+        $table = "users";
     } else {
         echo "<script>alert('No such role!');</script>";
+        exit;
     }
-    
+
+    // Fetch user by email
+    $stmt = $conn->prepare("SELECT * FROM $table WHERE email = ?");
+    $stmt->bind_param("s", $email);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $user   = $result->fetch_assoc();
+
+    // Validate user existence and password
+    if (!$user || !password_verify($password, $user['password'])) {
+        echo "<script>alert('Invalid email or password!');</script>";
+        echo "<script>window.location.href = '../login';</script>";
+        exit;
+    }
+
+    // ✅ Set session flags properly
+    $_SESSION['admin']  = ($role === 'admin');
+    $_SESSION['clergy'] = ($role === 'clergy');
+    $_SESSION['member'] = ($role === 'member');
+    $_SESSION['member_id'] = $user['id'];
+
+    // Redirect to home
+    echo "<script>window.location.href = '../home';</script>";
+    exit;
 }
 // Add event
 if (isset($_POST['add-event'])) {    

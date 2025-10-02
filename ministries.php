@@ -225,6 +225,17 @@ include_once 'config/db.php';
             <div class="ministries-grid">
                 <!-- Children's Ministry -->
                  <?php
+                 if(isset($_GET['id'])){
+                    $ministryId = $_GET['id'];
+                    if(isset($_SESSION['member']) && $_SESSION['member'] === true){
+                        $memberId = $_SESSION['member_id'];
+                        $sql = "INSERT INTO participants (activity_id, participant_id, join_date) VALUES ($ministryId, $memberId, NOW())";
+                        $result = mysqli_query($conn, $sql);
+                    }else{
+                        echo "<script>alert('You need to be logged in as a member to join a ministry.'); window.location.href = 'login';</script>";
+                    }   
+                    echo "<script>alert('You have successfully joined the ministry!');</script>";
+                 }
                  $ministry= " SELECT * from ministries";
                  $result = mysqli_query($conn, $ministry);
                  if (mysqli_num_rows($result) > 0) {
@@ -238,7 +249,7 @@ include_once 'config/db.php';
                                     <span><i class="fas fa-clock"></i> '.$row['time'].'</span>
                                 </div>
                                 <p class="ministry-desc">'.$row['description'].'</p>
-                                <a href="#" class="join-ministry">Join <i class="fas fa-arrow-right"></i></a>
+                                <a href="ministries.php?id='.$row['id'].'" class="join-ministry">Join <i class="fas fa-arrow-right"></i></a>
                             </div>    
                         </div>';
                      }
@@ -260,7 +271,7 @@ include_once 'config/db.php';
         </div>
     </section>
 
-    <!-- Ministry Leaders Section -->
+    <!-- Ministry Leaders Section 
     <section class="ministry-leaders">
         <div class="container">
             <h2 class="section-title">Ministry Leaders</h2>
@@ -322,7 +333,7 @@ include_once 'config/db.php';
                 </div>
             </div>
         </div>
-    </section>
+    </section>-->
 
     <!-- Call to Serve Section -->
     <section class="call-to-serve">
