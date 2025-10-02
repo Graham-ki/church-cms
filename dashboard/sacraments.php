@@ -1,3 +1,6 @@
+<?php
+include_once '../config/db.php';
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -12,6 +15,7 @@
             display: flex;
             border-bottom: 1px solid rgba(0, 0, 0, 0.1);
             margin-bottom: 20px;
+            flex-wrap: wrap;
         }
         
         .sacrament-tab {
@@ -108,6 +112,7 @@
         .record-info {
             display: flex;
             flex-direction: column;
+            flex-grow: 1;
         }
         
         .record-name {
@@ -119,6 +124,12 @@
             color: #666;
         }
         
+        .record-officiant {
+            font-size: 0.85rem;
+            color: #888;
+            margin-top: 3px;
+        }
+        
         .record-actions {
             display: flex;
             gap: 10px;
@@ -128,42 +139,30 @@
             color: var(--primary-color);
             margin-right: 5px;
         }
+        
+        .no-records {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+            font-style: italic;
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        
+        .pagination {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 20px;
+            padding: 15px 0;
+            border-top: 1px solid rgba(0, 0, 0, 0.1);
+        }
     </style>
 </head>
 <body>
     <!-- Header -->
-    <header class="header">
-        <div class="logo">
-            <img src="../public/images/logo.png" alt="Church Logo">
-            <div class="logo-text">
-                <h1>St. Stephen C.O.U</h1>
-                <p>Church Management System</p>
-            </div>
-        </div>
-        
-        <div class="header-search">
-            <input type="text" placeholder="Search sacraments...">
-            <button type="submit"><i class="fas fa-search"></i></button>
-        </div>
-        
-        <div class="user-actions">
-            <div class="notification-icon">
-                <i class="fas fa-bell"></i>
-                <span class="notification-badge">3</span>
-            </div>
-            
-            <div class="user-profile">
-                <div class="user-avatar" style="background-image: url('../public/images/user7.png');"></div>
-                <span class="user-name">Admin User</span>
-                <div class="user-dropdown">
-                    <a href="#"><i class="fas fa-user"></i> My Profile</a>
-                    <a href="#"><i class="fas fa-cog"></i> Settings</a>
-                    <a href="#" id="logout-btn"><i class="fas fa-sign-out-alt"></i> Logout</a>
-                </div>
-            </div>
-        </div>
-    </header>
-    
+    <?php include 'header.php'; ?>
     <!-- Main Content -->
     <div class="main-container">
         <!-- Sidebar Navigation -->
@@ -197,6 +196,12 @@
                     <a href="events" class="nav-link">
                         <i class="fas fa-calendar-alt"></i>
                         <span class="nav-text">Events</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="ministries" class="nav-link">
+                        <i class="fas fa-church"></i>
+                        <span class="nav-text">Ministries</span>
                     </a>
                 </div>
                 <div class="nav-item">
@@ -248,55 +253,61 @@
                     <button class="btn btn-sm" id="cancel-add-sacrament">Cancel</button>
                 </div>
                 
-                <form class="sacrament-form">
+                <form class="sacrament-form" method="post" action="../includes/functions.php">
                     <div class="form-group">
                         <label>Sacrament Type</label>
-                        <select class="form-control">
+                        <select class="form-control" name="sacrament_type" required>
                             <option value="">Select sacrament...</option>
-                            <option value="baptism">Baptism</option>
-                            <option value="communion">Holy Communion</option>
-                            <option value="confirmation">Confirmation</option>
-                            <option value="matrimony">Matrimony</option>
-                            <option value="holy-orders">Holy Orders</option>
-                            <option value="reconciliation">Reconciliation</option>
-                            <option value="anointing">Anointing of the Sick</option>
+                            <option value="Baptism">Baptism</option>
+                            <option value="Communion">Holy Communion</option>
+                            <option value="Confirmation">Confirmation</option>
+                            <option value="Matrimony">Matrimony</option>
+                            <option value="Holy Orders">Holy Orders</option>
+                            <option value="Reconciliation">Reconciliation</option>
+                            <option value="Anointing">Anointing of the Sick</option>
                         </select>
                     </div>
                     
                     <div class="form-group">
                         <label>Date</label>
-                        <input type="date" class="form-control">
+                        <input type="date" class="form-control" name="sacrament_date" required>
                     </div>
                     
                     <div class="form-group full-width">
                         <label>Member</label>
-                        <select class="form-control">
+                        <select class="form-control" name="member_id" required>
                             <option value="">Select member...</option>
-                            <option value="1">John Doe</option>
-                            <option value="2">Mary Smith</option>
-                            <option value="3">James Okello</option>
-                            <option value="4">Sarah Johnson</option>
+                            <?php
+                            $member_query = "SELECT id, first_name, last_name FROM members ORDER BY first_name, last_name";
+                            $member_result = mysqli_query($conn, $member_query);
+                            if(mysqli_num_rows($member_result) > 0) {
+                                while ($member = mysqli_fetch_assoc($member_result)) {
+                                    echo '<option value="' . $member['id'] . '">' . $member['first_name'] . ' ' . $member['last_name'] . '</option>';
+                                }
+                            } else {
+                                echo '<option value="">No members found</option>';
+                            }
+                            ?>
                         </select>
                     </div>
                     
                     <div class="form-group full-width">
                         <label>Officiant</label>
-                        <input type="text" class="form-control" placeholder="Name of officiating minister">
+                        <input name="officiant" type="text" class="form-control" placeholder="Name of officiating minister">
                     </div>
                     
                     <div class="form-group full-width">
                         <label>Location</label>
-                        <input type="text" class="form-control" placeholder="Where the sacrament took place">
+                        <input name="location" type="text" class="form-control" placeholder="Where the sacrament took place">
                     </div>
                     
                     <div class="form-group full-width">
                         <label>Notes</label>
-                        <textarea class="form-control" rows="3" placeholder="Additional notes about the sacrament"></textarea>
+                        <textarea name="notes" class="form-control" rows="3" placeholder="Additional notes about the sacrament"></textarea>
                     </div>
                     
                     <div class="form-group full-width" style="text-align: right;">
-                        <button type="button" class="btn"><i class="fas fa-save"></i> Save Draft</button>
-                        <button type="submit" class="btn btn-accent"><i class="fas fa-check"></i> Save Record</button>
+                        <button name="save-sacrament" type="submit" class="btn btn-accent"><i class="fas fa-check"></i> Save Record</button>
                     </div>
                 </form>
             </div>
@@ -309,6 +320,9 @@
                     <div class="sacrament-tab">Communion</div>
                     <div class="sacrament-tab">Confirmation</div>
                     <div class="sacrament-tab">Matrimony</div>
+                    <div class="sacrament-tab">Holy Orders</div>
+                    <div class="sacrament-tab">Reconciliation</div>
+                    <div class="sacrament-tab">Anointing</div>
                 </div>
                 
                 <!-- Overview Content -->
@@ -318,14 +332,15 @@
                         <div class="sacrament-card">
                             <div class="sacrament-header">
                                 <div class="sacrament-title">Baptism</div>
-                                <div class="sacrament-count">24</div>
+                                <div class="sacrament-count"><?php
+                                $count_query = "SELECT COUNT(*) AS count FROM sacraments WHERE type = 'Baptism'";
+                                $count_result = mysqli_query($conn, $count_query);
+                                $count_row = mysqli_fetch_assoc($count_result);
+                                echo $count_row['count'];
+                                ?></div>
                             </div>
                             <div class="sacrament-details">
                                 Records of members who have received the sacrament of baptism.
-                            </div>
-                            <div class="sacrament-actions">
-                                <button class="btn btn-sm"><i class="fas fa-eye"></i> View All</button>
-                                <button class="btn btn-sm btn-accent"><i class="fas fa-plus"></i> Add New</button>
                             </div>
                         </div>
                         
@@ -333,14 +348,15 @@
                         <div class="sacrament-card">
                             <div class="sacrament-header">
                                 <div class="sacrament-title">Holy Communion</div>
-                                <div class="sacrament-count">156</div>
+                                <div class="sacrament-count"><?php
+                                $count_query = "SELECT COUNT(*) AS count FROM sacraments WHERE type = 'Communion'";
+                                $count_result = mysqli_query($conn, $count_query);
+                                $count_row = mysqli_fetch_assoc($count_result);
+                                echo $count_row['count'];
+                                ?></div>
                             </div>
                             <div class="sacrament-details">
                                 Records of members who have received holy communion.
-                            </div>
-                            <div class="sacrament-actions">
-                                <button class="btn btn-sm"><i class="fas fa-eye"></i> View All</button>
-                                <button class="btn btn-sm btn-accent"><i class="fas fa-plus"></i> Add New</button>
                             </div>
                         </div>
                         
@@ -348,14 +364,16 @@
                         <div class="sacrament-card">
                             <div class="sacrament-header">
                                 <div class="sacrament-title">Confirmation</div>
-                                <div class="sacrament-count">18</div>
+                                <div class="sacrament-count">
+                                    <?php
+                                    $count_query = "SELECT COUNT(*) AS count FROM sacraments WHERE type = 'Confirmation'";
+                                    $count_result = mysqli_query($conn, $count_query);
+                                    $count_row = mysqli_fetch_assoc($count_result);
+                                    echo $count_row['count'];
+                                    ?></div>
                             </div>
                             <div class="sacrament-details">
                                 Records of members who have been confirmed in the faith.
-                            </div>
-                            <div class="sacrament-actions">
-                                <button class="btn btn-sm"><i class="fas fa-eye"></i> View All</button>
-                                <button class="btn btn-sm btn-accent"><i class="fas fa-plus"></i> Add New</button>
                             </div>
                         </div>
                         
@@ -363,20 +381,77 @@
                         <div class="sacrament-card">
                             <div class="sacrament-header">
                                 <div class="sacrament-title">Matrimony</div>
-                                <div class="sacrament-count">7</div>
+                                <div class="sacrament-count">
+                                    <?php
+                                    $count_query = "SELECT COUNT(*) AS count FROM sacraments WHERE type = 'Matrimony'";
+                                    $count_result = mysqli_query($conn, $count_query);
+                                    $count_row = mysqli_fetch_assoc($count_result);
+                                    echo $count_row['count'];
+                                    ?>
+                                </div>
                             </div>
                             <div class="sacrament-details">
                                 Records of marriages performed in the church.
                             </div>
-                            <div class="sacrament-actions">
-                                <button class="btn btn-sm"><i class="fas fa-eye"></i> View All</button>
-                                <button class="btn btn-sm btn-accent"><i class="fas fa-plus"></i> Add New</button>
+                        </div>
+                        
+                        <!-- Holy Orders Card -->
+                        <div class="sacrament-card">
+                            <div class="sacrament-header">
+                                <div class="sacrament-title">Holy Orders</div>
+                                <div class="sacrament-count">
+                                    <?php
+                                    $count_query = "SELECT COUNT(*) AS count FROM sacraments WHERE type = 'Holy Orders'";
+                                    $count_result = mysqli_query($conn, $count_query);
+                                    $count_row = mysqli_fetch_assoc($count_result);
+                                    echo $count_row['count'];
+                                    ?>
+                                </div>
+                            </div>
+                            <div class="sacrament-details">
+                                Records of members who have received Holy Orders.
+                            </div>
+                        </div>
+                        
+                        <!-- Reconciliation Card -->
+                        <div class="sacrament-card">
+                            <div class="sacrament-header">
+                                <div class="sacrament-title">Reconciliation</div>
+                                <div class="sacrament-count">
+                                    <?php
+                                    $count_query = "SELECT COUNT(*) AS count FROM sacraments WHERE type = 'Reconciliation'";
+                                    $count_result = mysqli_query($conn, $count_query);
+                                    $count_row = mysqli_fetch_assoc($count_result);
+                                    echo $count_row['count'];
+                                    ?>
+                                </div>
+                            </div>
+                            <div class="sacrament-details">
+                                Records of members who have received the Sacrament of Reconciliation.
+                            </div>
+                        </div>
+                        
+                        <!-- Anointing Card -->
+                        <div class="sacrament-card">
+                            <div class="sacrament-header">
+                                <div class="sacrament-title">Anointing of the Sick</div>
+                                <div class="sacrament-count">
+                                    <?php
+                                    $count_query = "SELECT COUNT(*) AS count FROM sacraments WHERE type = 'Anointing'";
+                                    $count_result = mysqli_query($conn, $count_query);
+                                    $count_row = mysqli_fetch_assoc($count_result);
+                                    echo $count_row['count'];
+                                    ?>
+                                </div>
+                            </div>
+                            <div class="sacrament-details">
+                                Records of members who have received the Anointing of the Sick.
                             </div>
                         </div>
                     </div>
                 </div>
                 
-                <!-- Baptism Content (Initially Hidden) -->
+                <!-- Baptism Content -->
                 <div id="baptism-content" style="display: none;">
                     <div class="actions" style="margin-bottom: 15px;">
                         <button class="btn btn-sm"><i class="fas fa-filter"></i> Filter</button>
@@ -385,48 +460,375 @@
                     </div>
                     
                     <div class="sacrament-records">
-                        <!-- Record 1 -->
-                        <div class="sacrament-record">
-                            <div class="record-info">
-                                <div class="record-name">John Doe</div>
-                                <div class="record-date"><i class="fas fa-calendar-alt calendar-icon"></i> March 15, 2025</div>
-                            </div>
-                            <div class="record-actions">
-                                <button class="btn-icon" title="Edit"><i class="far fa-edit"></i></button>
-                                <button class="btn-icon" title="Delete"><i class="far fa-trash-alt"></i></button>
-                                <button class="btn-icon" title="View Certificate"><i class="far fa-file-alt"></i></button>
-                            </div>
-                        </div>
+                        <?php
+                        $baptism_query = "SELECT s.*, m.first_name, m.last_name 
+                                         FROM sacraments s 
+                                         LEFT JOIN members m ON s.member_id = m.id 
+                                         WHERE s.type = 'Baptism' 
+                                         ORDER BY s.date DESC 
+                                         LIMIT 10";
+                        $baptism_result = mysqli_query($conn, $baptism_query);
                         
-                        <!-- Record 2 -->
-                        <div class="sacrament-record">
-                            <div class="record-info">
-                                <div class="record-name">Mary Smith</div>
-                                <div class="record-date"><i class="fas fa-calendar-alt calendar-icon"></i> January 22, 2025</div>
-                            </div>
-                            <div class="record-actions">
-                                <button class="btn-icon" title="Edit"><i class="far fa-edit"></i></button>
-                                <button class="btn-icon" title="Delete"><i class="far fa-trash-alt"></i></button>
-                                <button class="btn-icon" title="View Certificate"><i class="far fa-file-alt"></i></button>
-                            </div>
-                        </div>
-                        
-                        <!-- Record 3 -->
-                        <div class="sacrament-record">
-                            <div class="record-info">
-                                <div class="record-name">James Okello</div>
-                                <div class="record-date"><i class="fas fa-calendar-alt calendar-icon"></i> December 5, 2024</div>
-                            </div>
-                            <div class="record-actions">
-                                <button class="btn-icon" title="Edit"><i class="far fa-edit"></i></button>
-                                <button class="btn-icon" title="Delete"><i class="far fa-trash-alt"></i></button>
-                                <button class="btn-icon" title="View Certificate"><i class="far fa-file-alt"></i></button>
-                            </div>
-                        </div>
+                        if(mysqli_num_rows($baptism_result) > 0) {
+                            while($record = mysqli_fetch_assoc($baptism_result)) {
+                                echo '<div class="sacrament-record">';
+                                echo '<div class="record-info">';
+                                echo '<div class="record-name">' . $record['first_name'] . ' ' . $record['last_name'] . '</div>';
+                                echo '<div class="record-date"><i class="fas fa-calendar-alt calendar-icon"></i> ' . date('F j, Y', strtotime($record['date'])) . '</div>';
+                                if(!empty($record['officiated_by'])) {
+                                    echo '<div class="record-officiant"><i class="fas fa-user-tie calendar-icon"></i> ' . $record['officiated_by'] . '</div>';
+                                }
+                                echo '</div>';
+                                echo '<div class="record-actions">';
+                                echo '<button class="btn-icon" title="Edit"><i class="far fa-edit"></i></button>';
+                                echo '<button class="btn-icon" title="Delete"><i class="far fa-trash-alt"></i></button>';
+                                echo '<button class="btn-icon" title="View Certificate"><i class="far fa-file-alt"></i></button>';
+                                echo '</div>';
+                                echo '</div>';
+                            }
+                        } else {
+                            echo '<div class="no-records">No baptism records found</div>';
+                        }
+                        ?>
                     </div>
                     
-                    <div style="display: flex; justify-content: space-between; margin-top: 20px;">
-                        <div>Showing 1-10 of 24 records</div>
+                    <div class="pagination">
+                        <div>Showing 1-10 of <?php
+                        $total_query = "SELECT COUNT(*) AS total FROM sacraments WHERE type = 'Baptism'";
+                        $total_result = mysqli_query($conn, $total_query);
+                        $total_row = mysqli_fetch_assoc($total_result);
+                        echo $total_row['total'];
+                        ?> records</div>
+                        <div>
+                            <button class="btn btn-sm" style="margin-right: 5px;">Previous</button>
+                            <button class="btn btn-sm btn-accent">Next</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Communion Content -->
+                <div id="communion-content" style="display: none;">
+                    <div class="actions" style="margin-bottom: 15px;">
+                        <button class="btn btn-sm"><i class="fas fa-filter"></i> Filter</button>
+                        <button class="btn btn-sm"><i class="fas fa-download"></i> Export</button>
+                        <button class="btn btn-sm"><i class="fas fa-print"></i> Print</button>
+                    </div>
+                    
+                    <div class="sacrament-records">
+                        <?php
+                        $communion_query = "SELECT s.*, m.first_name, m.last_name 
+                                           FROM sacraments s 
+                                           LEFT JOIN members m ON s.member_id = m.id 
+                                           WHERE s.type = 'Communion' 
+                                           ORDER BY s.date DESC 
+                                           LIMIT 10";
+                        $communion_result = mysqli_query($conn, $communion_query);
+                        
+                        if(mysqli_num_rows($communion_result) > 0) {
+                            while($record = mysqli_fetch_assoc($communion_result)) {
+                                echo '<div class="sacrament-record">';
+                                echo '<div class="record-info">';
+                                echo '<div class="record-name">' . $record['first_name'] . ' ' . $record['last_name'] . '</div>';
+                                echo '<div class="record-date"><i class="fas fa-calendar-alt calendar-icon"></i> ' . date('F j, Y', strtotime($record['date'])) . '</div>';
+                                if(!empty($record['officiated_by'])) {
+                                    echo '<div class="record-officiant"><i class="fas fa-user-tie calendar-icon"></i> ' . $record['officiated_by'] . '</div>';
+                                }
+                                echo '</div>';
+                                echo '<div class="record-actions">';
+                                echo '<button class="btn-icon" title="Edit"><i class="far fa-edit"></i></button>';
+                                echo '<button class="btn-icon" title="Delete"><i class="far fa-trash-alt"></i></button>';
+                                echo '<button class="btn-icon" title="View Certificate"><i class="far fa-file-alt"></i></button>';
+                                echo '</div>';
+                                echo '</div>';
+                            }
+                        } else {
+                            echo '<div class="no-records">No communion records found</div>';
+                        }
+                        ?>
+                    </div>
+                    
+                    <div class="pagination">
+                        <div>Showing 1-10 of <?php
+                        $total_query = "SELECT COUNT(*) AS total FROM sacraments WHERE type = 'Communion'";
+                        $total_result = mysqli_query($conn, $total_query);
+                        $total_row = mysqli_fetch_assoc($total_result);
+                        echo $total_row['total'];
+                        ?> records</div>
+                        <div>
+                            <button class="btn btn-sm" style="margin-right: 5px;">Previous</button>
+                            <button class="btn btn-sm btn-accent">Next</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Confirmation Content -->
+                <div id="confirmation-content" style="display: none;">
+                    <div class="actions" style="margin-bottom: 15px;">
+                        <button class="btn btn-sm"><i class="fas fa-filter"></i> Filter</button>
+                        <button class="btn btn-sm"><i class="fas fa-download"></i> Export</button>
+                        <button class="btn btn-sm"><i class="fas fa-print"></i> Print</button>
+                    </div>
+                    
+                    <div class="sacrament-records">
+                        <?php
+                        $confirmation_query = "SELECT s.*, m.first_name, m.last_name 
+                                              FROM sacraments s 
+                                              LEFT JOIN members m ON s.member_id = m.id 
+                                              WHERE s.type = 'Confirmation' 
+                                              ORDER BY s.date DESC 
+                                              LIMIT 10";
+                        $confirmation_result = mysqli_query($conn, $confirmation_query);
+                        
+                        if(mysqli_num_rows($confirmation_result) > 0) {
+                            while($record = mysqli_fetch_assoc($confirmation_result)) {
+                                echo '<div class="sacrament-record">';
+                                echo '<div class="record-info">';
+                                echo '<div class="record-name">' . $record['first_name'] . ' ' . $record['last_name'] . '</div>';
+                                echo '<div class="record-date"><i class="fas fa-calendar-alt calendar-icon"></i> ' . date('F j, Y', strtotime($record['date'])) . '</div>';
+                                if(!empty($record['officiated_by'])) {
+                                    echo '<div class="record-officiant"><i class="fas fa-user-tie calendar-icon"></i> ' . $record['officiated_by'] . '</div>';
+                                }
+                                echo '</div>';
+                                echo '<div class="record-actions">';
+                                echo '<button class="btn-icon" title="Edit"><i class="far fa-edit"></i></button>';
+                                echo '<button class="btn-icon" title="Delete"><i class="far fa-trash-alt"></i></button>';
+                                echo '<button class="btn-icon" title="View Certificate"><i class="far fa-file-alt"></i></button>';
+                                echo '</div>';
+                                echo '</div>';
+                            }
+                        } else {
+                            echo '<div class="no-records">No confirmation records found</div>';
+                        }
+                        ?>
+                    </div>
+                    
+                    <div class="pagination">
+                        <div>Showing 1-10 of <?php
+                        $total_query = "SELECT COUNT(*) AS total FROM sacraments WHERE type = 'Confirmation'";
+                        $total_result = mysqli_query($conn, $total_query);
+                        $total_row = mysqli_fetch_assoc($total_result);
+                        echo $total_row['total'];
+                        ?> records</div>
+                        <div>
+                            <button class="btn btn-sm" style="margin-right: 5px;">Previous</button>
+                            <button class="btn btn-sm btn-accent">Next</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Matrimony Content -->
+                <div id="matrimony-content" style="display: none;">
+                    <div class="actions" style="margin-bottom: 15px;">
+                        <button class="btn btn-sm"><i class="fas fa-filter"></i> Filter</button>
+                        <button class="btn btn-sm"><i class="fas fa-download"></i> Export</button>
+                        <button class="btn btn-sm"><i class="fas fa-print"></i> Print</button>
+                    </div>
+                    
+                    <div class="sacrament-records">
+                        <?php
+                        $matrimony_query = "SELECT s.*, m.first_name, m.last_name 
+                                           FROM sacraments s 
+                                           LEFT JOIN members m ON s.member_id = m.id 
+                                           WHERE s.type = 'Matrimony' 
+                                           ORDER BY s.date DESC 
+                                           LIMIT 10";
+                        $matrimony_result = mysqli_query($conn, $matrimony_query);
+                        
+                        if(mysqli_num_rows($matrimony_result) > 0) {
+                            while($record = mysqli_fetch_assoc($matrimony_result)) {
+                                echo '<div class="sacrament-record">';
+                                echo '<div class="record-info">';
+                                echo '<div class="record-name">' . $record['first_name'] . ' ' . $record['last_name'] . '</div>';
+                                echo '<div class="record-date"><i class="fas fa-calendar-alt calendar-icon"></i> ' . date('F j, Y', strtotime($record['date'])) . '</div>';
+                                if(!empty($record['officiated_by'])) {
+                                    echo '<div class="record-officiant"><i class="fas fa-user-tie calendar-icon"></i> ' . $record['officiated_by'] . '</div>';
+                                }
+                                echo '</div>';
+                                echo '<div class="record-actions">';
+                                echo '<button class="btn-icon" title="Edit"><i class="far fa-edit"></i></button>';
+                                echo '<button class="btn-icon" title="Delete"><i class="far fa-trash-alt"></i></button>';
+                                echo '<button class="btn-icon" title="View Certificate"><i class="far fa-file-alt"></i></button>';
+                                echo '</div>';
+                                echo '</div>';
+                            }
+                        } else {
+                            echo '<div class="no-records">No matrimony records found</div>';
+                        }
+                        ?>
+                    </div>
+                    
+                    <div class="pagination">
+                        <div>Showing 1-10 of <?php
+                        $total_query = "SELECT COUNT(*) AS total FROM sacraments WHERE type = 'Matrimony'";
+                        $total_result = mysqli_query($conn, $total_query);
+                        $total_row = mysqli_fetch_assoc($total_result);
+                        echo $total_row['total'];
+                        ?> records</div>
+                        <div>
+                            <button class="btn btn-sm" style="margin-right: 5px;">Previous</button>
+                            <button class="btn btn-sm btn-accent">Next</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Holy Orders Content -->
+                <div id="holy-orders-content" style="display: none;">
+                    <div class="actions" style="margin-bottom: 15px;">
+                        <button class="btn btn-sm"><i class="fas fa-filter"></i> Filter</button>
+                        <button class="btn btn-sm"><i class="fas fa-download"></i> Export</button>
+                        <button class="btn btn-sm"><i class="fas fa-print"></i> Print</button>
+                    </div>
+                    
+                    <div class="sacrament-records">
+                        <?php
+                        $holy_orders_query = "SELECT s.*, m.first_name, m.last_name 
+                                             FROM sacraments s 
+                                             LEFT JOIN members m ON s.member_id = m.id 
+                                             WHERE s.type = 'Holy Orders' 
+                                             ORDER BY s.date DESC 
+                                             LIMIT 10";
+                        $holy_orders_result = mysqli_query($conn, $holy_orders_query);
+                        
+                        if(mysqli_num_rows($holy_orders_result) > 0) {
+                            while($record = mysqli_fetch_assoc($holy_orders_result)) {
+                                echo '<div class="sacrament-record">';
+                                echo '<div class="record-info">';
+                                echo '<div class="record-name">' . $record['first_name'] . ' ' . $record['last_name'] . '</div>';
+                                echo '<div class="record-date"><i class="fas fa-calendar-alt calendar-icon"></i> ' . date('F j, Y', strtotime($record['date'])) . '</div>';
+                                if(!empty($record['officiated_by'])) {
+                                    echo '<div class="record-officiant"><i class="fas fa-user-tie calendar-icon"></i> ' . $record['officiated_by'] . '</div>';
+                                }
+                                echo '</div>';
+                                echo '<div class="record-actions">';
+                                echo '<button class="btn-icon" title="Edit"><i class="far fa-edit"></i></button>';
+                                echo '<button class="btn-icon" title="Delete"><i class="far fa-trash-alt"></i></button>';
+                                echo '<button class="btn-icon" title="View Certificate"><i class="far fa-file-alt"></i></button>';
+                                echo '</div>';
+                                echo '</div>';
+                            }
+                        } else {
+                            echo '<div class="no-records">No holy orders records found</div>';
+                        }
+                        ?>
+                    </div>
+                    
+                    <div class="pagination">
+                        <div>Showing 1-10 of <?php
+                        $total_query = "SELECT COUNT(*) AS total FROM sacraments WHERE type = 'Holy Orders'";
+                        $total_result = mysqli_query($conn, $total_query);
+                        $total_row = mysqli_fetch_assoc($total_result);
+                        echo $total_row['total'];
+                        ?> records</div>
+                        <div>
+                            <button class="btn btn-sm" style="margin-right: 5px;">Previous</button>
+                            <button class="btn btn-sm btn-accent">Next</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Reconciliation Content -->
+                <div id="reconciliation-content" style="display: none;">
+                    <div class="actions" style="margin-bottom: 15px;">
+                        <button class="btn btn-sm"><i class="fas fa-filter"></i> Filter</button>
+                        <button class="btn btn-sm"><i class="fas fa-download"></i> Export</button>
+                        <button class="btn btn-sm"><i class="fas fa-print"></i> Print</button>
+                    </div>
+                    
+                    <div class="sacrament-records">
+                        <?php
+                        $reconciliation_query = "SELECT s.*, m.first_name, m.last_name 
+                                               FROM sacraments s 
+                                               LEFT JOIN members m ON s.member_id = m.id 
+                                               WHERE s.type = 'Reconciliation' 
+                                               ORDER BY s.date DESC 
+                                               LIMIT 10";
+                        $reconciliation_result = mysqli_query($conn, $reconciliation_query);
+                        
+                        if(mysqli_num_rows($reconciliation_result) > 0) {
+                            while($record = mysqli_fetch_assoc($reconciliation_result)) {
+                                echo '<div class="sacrament-record">';
+                                echo '<div class="record-info">';
+                                echo '<div class="record-name">' . $record['first_name'] . ' ' . $record['last_name'] . '</div>';
+                                echo '<div class="record-date"><i class="fas fa-calendar-alt calendar-icon"></i> ' . date('F j, Y', strtotime($record['date'])) . '</div>';
+                                if(!empty($record['officiated_by'])) {
+                                    echo '<div class="record-officiant"><i class="fas fa-user-tie calendar-icon"></i> ' . $record['officiated_by'] . '</div>';
+                                }
+                                echo '</div>';
+                                echo '<div class="record-actions">';
+                                echo '<button class="btn-icon" title="Edit"><i class="far fa-edit"></i></button>';
+                                echo '<button class="btn-icon" title="Delete"><i class="far fa-trash-alt"></i></button>';
+                                echo '<button class="btn-icon" title="View Certificate"><i class="far fa-file-alt"></i></button>';
+                                echo '</div>';
+                                echo '</div>';
+                            }
+                        } else {
+                            echo '<div class="no-records">No reconciliation records found</div>';
+                        }
+                        ?>
+                    </div>
+                    
+                    <div class="pagination">
+                        <div>Showing 1-10 of <?php
+                        $total_query = "SELECT COUNT(*) AS total FROM sacraments WHERE type = 'Reconciliation'";
+                        $total_result = mysqli_query($conn, $total_query);
+                        $total_row = mysqli_fetch_assoc($total_result);
+                        echo $total_row['total'];
+                        ?> records</div>
+                        <div>
+                            <button class="btn btn-sm" style="margin-right: 5px;">Previous</button>
+                            <button class="btn btn-sm btn-accent">Next</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Anointing Content -->
+                <div id="anointing-content" style="display: none;">
+                    <div class="actions" style="margin-bottom: 15px;">
+                        <button class="btn btn-sm"><i class="fas fa-filter"></i> Filter</button>
+                        <button class="btn btn-sm"><i class="fas fa-download"></i> Export</button>
+                        <button class="btn btn-sm"><i class="fas fa-print"></i> Print</button>
+                    </div>
+                    
+                    <div class="sacrament-records">
+                        <?php
+                        $anointing_query = "SELECT s.*, m.first_name, m.last_name 
+                                          FROM sacraments s 
+                                          LEFT JOIN members m ON s.member_id = m.id 
+                                          WHERE s.type = 'Anointing' 
+                                          ORDER BY s.date DESC 
+                                          LIMIT 10";
+                        $anointing_result = mysqli_query($conn, $anointing_query);
+                        
+                        if(mysqli_num_rows($anointing_result) > 0) {
+                            while($record = mysqli_fetch_assoc($anointing_result)) {
+                                echo '<div class="sacrament-record">';
+                                echo '<div class="record-info">';
+                                echo '<div class="record-name">' . $record['first_name'] . ' ' . $record['last_name'] . '</div>';
+                                echo '<div class="record-date"><i class="fas fa-calendar-alt calendar-icon"></i> ' . date('F j, Y', strtotime($record['date'])) . '</div>';
+                                if(!empty($record['officiated_by'])) {
+                                    echo '<div class="record-officiant"><i class="fas fa-user-tie calendar-icon"></i> ' . $record['officiated_by'] . '</div>';
+                                }
+                                echo '</div>';
+                                echo '<div class="record-actions">';
+                                echo '<button class="btn-icon" title="Edit"><i class="far fa-edit"></i></button>';
+                                echo '<button class="btn-icon" title="Delete"><i class="far fa-trash-alt"></i></button>';
+                                echo '<button class="btn-icon" title="View Certificate"><i class="far fa-file-alt"></i></button>';
+                                echo '</div>';
+                                echo '</div>';
+                            }
+                        } else {
+                            echo '<div class="no-records">No anointing records found</div>';
+                        }
+                        ?>
+                    </div>
+                    
+                    <div class="pagination">
+                        <div>Showing 1-10 of <?php
+                        $total_query = "SELECT COUNT(*) AS total FROM sacraments WHERE type = 'Anointing'";
+                        $total_result = mysqli_query($conn, $total_query);
+                        $total_row = mysqli_fetch_assoc($total_result);
+                        echo $total_row['total'];
+                        ?> records</div>
                         <div>
                             <button class="btn btn-sm" style="margin-right: 5px;">Previous</button>
                             <button class="btn btn-sm btn-accent">Next</button>
@@ -474,7 +876,13 @@
             const sacramentTabs = document.querySelectorAll('.sacrament-tab');
             const contentSections = {
                 'overview': document.getElementById('overview-content'),
-                'baptism': document.getElementById('baptism-content')
+                'baptism': document.getElementById('baptism-content'),
+                'communion': document.getElementById('communion-content'),
+                'confirmation': document.getElementById('confirmation-content'),
+                'matrimony': document.getElementById('matrimony-content'),
+                'holy orders': document.getElementById('holy-orders-content'),
+                'reconciliation': document.getElementById('reconciliation-content'),
+                'anointing': document.getElementById('anointing-content')
             };
             
             sacramentTabs.forEach(tab => {
@@ -487,17 +895,14 @@
                     
                     // Hide all content sections
                     Object.values(contentSections).forEach(section => {
-                        section.style.display = 'none';
+                        if(section) section.style.display = 'none';
                     });
                     
                     // Show the appropriate content section
                     const tabText = this.textContent.trim().toLowerCase();
-                    if (tabText === 'overview') {
-                        contentSections.overview.style.display = 'block';
-                    } else if (tabText === 'baptism') {
-                        contentSections.baptism.style.display = 'block';
+                    if (contentSections[tabText]) {
+                        contentSections[tabText].style.display = 'block';
                     }
-                    // Add more conditions for other tabs as needed
                 });
             });
             

@@ -1,5 +1,7 @@
 <?php
-session_start();?>
+session_start();
+include_once 'config/db.php';
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -222,8 +224,28 @@ session_start();?>
             
             <div class="ministries-grid">
                 <!-- Children's Ministry -->
-                <div class="ministry-card glass-card">
-                    <div class="ministry-image" style="background-image: url('public/images/children-ministry.jpeg');"></div>
+                 <?php
+                 $ministry= " SELECT * from ministries";
+                 $result = mysqli_query($conn, $ministry);
+                 if (mysqli_num_rows($result) > 0) {
+                     while ($row = mysqli_fetch_assoc($result)) {
+                            echo '<div class="ministry-card glass-card">
+                            <div class="ministry-content">
+                                <h3>'.$row['name'].' Ministry</h3>
+                                <div class="ministry-meta">
+                                    <span><i class="fas fa-users"></i> '.$row['age_range'].'</span>
+                                    <span><i class="fas fa-calendar"></i> '.$row['day'].'</span>
+                                    <span><i class="fas fa-clock"></i> '.$row['time'].'</span>
+                                </div>
+                                <p class="ministry-desc">'.$row['description'].'</p>
+                                <a href="#" class="join-ministry">Join <i class="fas fa-arrow-right"></i></a>
+                            </div>    
+                        </div>';
+                     }
+                 }
+                 ?>
+                <!-- Children's Ministry -->
+                <!--<div class="ministry-card glass-card">
                     <div class="ministry-content">
                         <h3>Children's Ministry</h3>
                         <div class="ministry-meta">
@@ -233,77 +255,7 @@ session_start();?>
                         <p class="ministry-desc">Engaging, age-appropriate Bible teaching and activities that help children grow in their faith through fun, interactive lessons and worship.</p>
                         <a href="#" class="join-ministry">Learn More <i class="fas fa-arrow-right"></i></a>
                     </div>
-                </div>
-                
-                <!-- Youth Ministry -->
-                <div class="ministry-card glass-card">
-                    <div class="ministry-image" style="background-image: url('public/images/youth-ministry.jpeg');"></div>
-                    <div class="ministry-content">
-                        <h3>Youth Ministry</h3>
-                        <div class="ministry-meta">
-                            <span><i class="fas fa-users"></i> Teens 13-18</span>
-                            <span><i class="fas fa-clock"></i> Fridays 7:30PM</span>
-                        </div>
-                        <p class="ministry-desc">Dynamic gatherings where teens connect with God and each other through relevant teaching, worship, and fun activities.</p>
-                        <a href="#" class="join-ministry">Learn More <i class="fas fa-arrow-right"></i></a>
-                    </div>
-                </div>
-                
-                <!-- Women's Ministry -->
-                <div class="ministry-card glass-card">
-                    <div class="ministry-image" style="background-image: url('public/images/womens-ministry.jpeg');"></div>
-                    <div class="ministry-content">
-                        <h3>Women's Ministry</h3>
-                        <div class="ministry-meta">
-                            <span><i class="fas fa-users"></i> All Women</span>
-                            <span><i class="fas fa-clock"></i> Saturdays 2PM</span>
-                        </div>
-                        <p class="ministry-desc">Encouraging women to grow spiritually through Bible studies, fellowship, and service opportunities tailored for women of all ages.</p>
-                        <a href="#" class="join-ministry">Learn More <i class="fas fa-arrow-right"></i></a>
-                    </div>
-                </div>
-                
-                <!-- Men's Ministry -->
-                <div class="ministry-card glass-card">
-                    <div class="ministry-image" style="background-image: url('public/images/mens-ministry.jpeg');"></div>
-                    <div class="ministry-content">
-                        <h3>Men's Ministry</h3>
-                        <div class="ministry-meta">
-                            <span><i class="fas fa-users"></i> All Men</span>
-                            <span><i class="fas fa-clock"></i> Saturdays 9AM</span>
-                        </div>
-                        <p class="ministry-desc">Equipping men to live godly lives through fellowship, accountability, and practical Bible teaching for today's challenges.</p>
-                        <a href="#" class="join-ministry">Learn More <i class="fas fa-arrow-right"></i></a>
-                    </div>
-                </div>
-                
-                <!-- Worship Ministry -->
-                <div class="ministry-card glass-card">
-                    <div class="ministry-image" style="background-image: url('public/images/worship-ministry.jpeg');"></div>
-                    <div class="ministry-content">
-                        <h3>Worship Ministry</h3>
-                        <div class="ministry-meta">
-                            <span><i class="fas fa-users"></i> All Ages</span>
-                            <span><i class="fas fa-clock"></i> Wednesdays 6:30PM</span>
-                        </div>
-                        <p class="ministry-desc">Leading the congregation in worship through music and arts. Open to vocalists, instrumentalists, and technical team members.</p>
-                        <a href="#" class="join-ministry">Learn More <i class="fas fa-arrow-right"></i></a>
-                    </div>
-                </div>
-                
-                <!-- Outreach Ministry -->
-                <div class="ministry-card glass-card">
-                    <div class="ministry-image" style="background-image: url('public/images/outreach-ministry.jpeg');"></div>
-                    <div class="ministry-content">
-                        <h3>Outreach Ministry</h3>
-                        <div class="ministry-meta">
-                            <span><i class="fas fa-users"></i> All Members</span>
-                            <span><i class="fas fa-clock"></i> Monthly Events</span>
-                        </div>
-                        <p class="ministry-desc">Sharing Christ's love through practical service in our community including evangelism, benevolence, and mission projects.</p>
-                        <a href="#" class="join-ministry">Learn More <i class="fas fa-arrow-right"></i></a>
-                    </div>
-                </div>
+                </div>-->
             </div>
         </div>
     </section>

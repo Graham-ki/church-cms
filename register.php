@@ -196,6 +196,10 @@
                         <i class="fas fa-user"></i>
                         <input type="text" class="register-input" placeholder="Last Name" name="last_name" required>
                     </div>
+                     <div class="input-group">
+                        <i class="fas fa-file"></i>
+                        <input type="file" class="register-input" placeholder="Profile Picture" name="profile_pic" required>
+                    </div>
                 </div>
                 <div class="form-row">
                     <div class="input-group">
