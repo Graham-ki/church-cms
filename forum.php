@@ -1,5 +1,85 @@
 <?php
 session_start();
+include 'config/db.php';
+
+// Function to get forum categories with statistics
+function getForumCategories($conn) {
+    $sql = "SELECT f.*, 
+                   COUNT(DISTINCT dt.id) as discussions_count,
+                   COUNT(DISTINCT dt.author_id) as participants_count
+            FROM forums f
+            LEFT JOIN discussion_threads dt ON f.id = dt.forum_id AND dt.is_locked = 0
+            WHERE f.is_active = 1
+            GROUP BY f.id
+            ORDER BY f.sort_order ASC, f.name ASC";
+    
+    $result = mysqli_query($conn, $sql);
+    $forums = [];
+    
+    if ($result && mysqli_num_rows($result) > 0) {
+        while($row = mysqli_fetch_assoc($result)) {
+            $forums[] = $row;
+        }
+    }
+    
+    return $forums;
+}
+
+// Function to get recent discussions
+function getRecentDiscussions($conn, $limit = 5) {
+    $sql = "SELECT dt.*, f.name as forum_name, u.name as author_name, u.avatar,
+                   (SELECT COUNT(*) FROM thread_messages WHERE thread_id = dt.id) as reply_count,
+                   (SELECT COUNT(*) FROM thread_participants WHERE thread_id = dt.id) as view_count
+            FROM discussion_threads dt
+            LEFT JOIN forums f ON dt.forum_id = f.id
+            LEFT JOIN users u ON dt.author_id = u.id
+            WHERE dt.is_locked = 0
+            ORDER BY dt.created_at DESC
+            LIMIT $limit";
+    
+    $result = mysqli_query($conn, $sql);
+    $discussions = [];
+    
+    if ($result && mysqli_num_rows($result) > 0) {
+        while($row = mysqli_fetch_assoc($result)) {
+            $discussions[] = $row;
+        }
+    }
+    
+    return $discussions;
+}
+
+// Get data from database
+$forum_categories = getForumCategories($conn);
+$recent_discussions = getRecentDiscussions($conn, 3);
+
+// Close connection
+mysqli_close($conn);
+
+// Time formatting function
+function time_elapsed_string($datetime, $full = false) {
+    if(empty($datetime)) return 'Recently';
+    
+    $now = new DateTime;
+    $ago = new DateTime($datetime);
+    $diff = $now->diff($ago);
+
+    $string = [];
+    
+    if ($diff->y > 0) $string[] = $diff->y . ' year' . ($diff->y > 1 ? 's' : '');
+    if ($diff->m > 0) $string[] = $diff->m . ' month' . ($diff->m > 1 ? 's' : '');
+    if ($diff->d > 0) $string[] = $diff->d . ' day' . ($diff->d > 1 ? 's' : '');
+    if ($diff->h > 0) $string[] = $diff->h . ' hour' . ($diff->h > 1 ? 's' : '');
+    if ($diff->i > 0) $string[] = $diff->i . ' minute' . ($diff->i > 1 ? 's' : '');
+    
+    if (empty($string)) return 'just now';
+    
+    if (!$full) {
+        return $string[0] . ' ago';
+    }
+    
+    return implode(', ', $string) . ' ago';
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -92,6 +172,7 @@ session_start();
             padding: 20px;
             margin-bottom: 20px;
             transition: all 0.3s ease;
+            cursor: pointer;
         }
         
         .discussion-item:hover {
@@ -135,6 +216,7 @@ session_start();
         .discussion-excerpt {
             margin: 15px 0;
             color: #555;
+            line-height: 1.6;
         }
         
         .discussion-actions {
@@ -187,6 +269,7 @@ session_start();
             border: none;
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
             padding-right: 50px;
+            font-family: inherit;
         }
         
         .search-forums button {
@@ -200,6 +283,44 @@ session_start();
             height: 40px;
             border-radius: 50%;
             cursor: pointer;
+            transition: background 0.3s;
+        }
+        
+        .search-forums button:hover {
+            background: var(--secondary-color);
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 12px 25px;
+            background: var(--primary-color);
+            color: white;
+            border-radius: 30px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+        }
+        
+        .btn:hover {
+            background: var(--secondary-color);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            text-decoration: none;
+            color: white;
+        }
+        
+        .no-data {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+        
+        .no-data i {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            color: #ddd;
         }
     </style>
 </head>
@@ -211,27 +332,24 @@ session_start();
             <span>St. Stephen C.O.U</span>
         </div>
         <ul class="nav-links">
-            <li><a href="home">Home</a></li>
-            <li><a href="about">About</a></li>
-            <li><a href="events">Events</a></li>
-            <li><a href="ministries">Ministries</a></li>
-            <li><a href="forums" class="active">Forums</a></li>
-            <li><a href="contact">Contact</a></li>
-              <?php
+            <li><a href="home.php">Home</a></li>
+            <li><a href="about.php">About</a></li>
+            <li><a href="events.php">Events</a></li>
+            <li><a href="ministries.php">Ministries</a></li>
+            <li><a href="forums.php" class="active">Forums</a></li>
+            <li><a href="contact.php">Contact</a></li>
+            <?php
             if (isset($_SESSION['admin']) && $_SESSION['admin'] === true) {
-                echo '<li><a href="dashboard" class="dashboard-btn">My Dashboard</a></li>
-                <li><a href="logout" class="login-btn">Logout</a></li>
-                ';
+                echo '<li><a href="dashboard.php" class="dashboard-btn">My Dashboard</a></li>
+                <li><a href="logout.php" class="login-btn">Logout</a></li>';
             } elseif (isset($_SESSION['clergy']) && $_SESSION['clergy'] === true) {
-                echo '<li><a href="clergy-dashboard" class="dashboard-btn">My Dashboard</a></li>
-                <li><a href="logout" class="login-btn">Logout</a></li>
-                ';
+                echo '<li><a href="clergy-dashboard.php" class="dashboard-btn">My Dashboard</a></li>
+                <li><a href="logout.php" class="login-btn">Logout</a></li>';
             } elseif (isset($_SESSION['member']) && $_SESSION['member'] === true) {
-                echo '<li><a href="member-dashboard" class="dashboard-btn">My Dashboard</a></li>
-                <li><a href="logout" class="login-btn">Logout</a></li>
-                ';
+                echo '<li><a href="member-dashboard.php" class="dashboard-btn">My Dashboard</a></li>
+                <li><a href="logout.php" class="login-btn">Logout</a></li>';
             } else {
-                echo '<li><a href="login" class="login-btn">Login</a></li>';
+                echo '<li><a href="login.php" class="login-btn">Login</a></li>';
             }
             ?>
         </ul>
@@ -257,94 +375,33 @@ session_start();
             <p class="section-subtitle">Join conversations that matter to you</p>
             
             <div class="search-forums">
-                <input type="text" placeholder="Search discussions...">
-                <button type="submit"><i class="fas fa-search"></i></button>
+                <input type="text" id="forum-search" placeholder="Search forums and discussions...">
+                <button type="submit" id="search-button"><i class="fas fa-search"></i></button>
             </div>
             
-            <div class="forum-categories">
-                <!-- Bible Study Forum -->
-                <div class="forum-card glass-card">
-                    <div class="forum-icon">
-                        <i class="fas fa-bible"></i>
+            <div class="forum-categories" id="forum-categories">
+                <?php if(empty($forum_categories)): ?>
+                    <div class="no-data">
+                        <i class="fas fa-comments"></i>
+                        <h3>No Forums Available</h3>
+                        <p>Forum categories will be available soon. Check back later!</p>
                     </div>
-                    <h3>Bible Study</h3>
-                    <p>Discuss Scripture passages, ask questions, and share insights from your personal study.</p>
-                    <div class="forum-stats">
-                        <span><i class="fas fa-comments"></i> 245 Discussions</span>
-                        <span><i class="fas fa-user-friends"></i> 1.2K Participants</span>
+                <?php else: ?>
+                    <?php foreach($forum_categories as $forum): ?>
+                    <div class="forum-card glass-card" data-forum-name="<?php echo strtolower(htmlspecialchars($forum['name'])); ?>" data-forum-desc="<?php echo strtolower(htmlspecialchars($forum['description'])); ?>">
+                        <div class="forum-icon">
+                            <i class="<?php echo htmlspecialchars($forum['icon']); ?>"></i>
+                        </div>
+                        <h3><?php echo htmlspecialchars($forum['name']); ?></h3>
+                        <p><?php echo htmlspecialchars($forum['description']); ?></p>
+                        <div class="forum-stats">
+                            <span><i class="fas fa-comments"></i> <?php echo $forum['discussions_count']; ?> Discussions</span>
+                            <span><i class="fas fa-user-friends"></i> <?php echo $forum['participants_count']; ?> Participants</span>
+                        </div>
+                        <a href="forum-view.php?forum_id=<?php echo $forum['id']; ?>" class="btn" style="margin-top: 20px;">Browse Discussions</a>
                     </div>
-                    <a href="#" class="btn" style="margin-top: 20px;">Join Discussion</a>
-                </div>
-                
-                <!-- Prayer Requests -->
-                <div class="forum-card glass-card">
-                    <div class="forum-icon">
-                        <i class="fas fa-pray"></i>
-                    </div>
-                    <h3>Prayer Requests</h3>
-                    <p>Share prayer needs and pray for others in our church family.</p>
-                    <div class="forum-stats">
-                        <span><i class="fas fa-comments"></i> 189 Requests</span>
-                        <span><i class="fas fa-user-friends"></i> 876 Participants</span>
-                    </div>
-                    <a href="#" class="btn" style="margin-top: 20px;">Share Request</a>
-                </div>
-                
-                <!-- Christian Living -->
-                <div class="forum-card glass-card">
-                    <div class="forum-icon">
-                        <i class="fas fa-hands-helping"></i>
-                    </div>
-                    <h3>Christian Living</h3>
-                    <p>Discuss practical aspects of living out your faith in daily life.</p>
-                    <div class="forum-stats">
-                        <span><i class="fas fa-comments"></i> 156 Discussions</span>
-                        <span><i class="fas fa-user-friends"></i> 943 Participants</span>
-                    </div>
-                    <a href="#" class="btn" style="margin-top: 20px;">Join Discussion</a>
-                </div>
-                
-                <!-- Marriage & Family -->
-                <div class="forum-card glass-card">
-                    <div class="forum-icon">
-                        <i class="fas fa-home"></i>
-                    </div>
-                    <h3>Marriage & Family</h3>
-                    <p>Building godly families in today's world. Share wisdom and encouragement.</p>
-                    <div class="forum-stats">
-                        <span><i class="fas fa-comments"></i> 98 Discussions</span>
-                        <span><i class="fas fa-user-friends"></i> 542 Participants</span>
-                    </div>
-                    <a href="#" class="btn" style="margin-top: 20px;">Join Discussion</a>
-                </div>
-                
-                <!-- Youth Corner -->
-                <div class="forum-card glass-card">
-                    <div class="forum-icon">
-                        <i class="fas fa-users"></i>
-                    </div>
-                    <h3>Youth Corner</h3>
-                    <p>Discussions by and for our young people (ages 13-25).</p>
-                    <div class="forum-stats">
-                        <span><i class="fas fa-comments"></i> 112 Discussions</span>
-                        <span><i class="fas fa-user-friends"></i> 387 Participants</span>
-                    </div>
-                    <a href="#" class="btn" style="margin-top: 20px;">Join Discussion</a>
-                </div>
-                
-                <!-- Missions & Outreach -->
-                <div class="forum-card glass-card">
-                    <div class="forum-icon">
-                        <i class="fas fa-globe-africa"></i>
-                    </div>
-                    <h3>Missions & Outreach</h3>
-                    <p>Share ideas and experiences about local and global missions.</p>
-                    <div class="forum-stats">
-                        <span><i class="fas fa-comments"></i> 76 Discussions</span>
-                        <span><i class="fas fa-user-friends"></i> 321 Participants</span>
-                    </div>
-                    <a href="#" class="btn" style="margin-top: 20px;">Join Discussion</a>
-                </div>
+                    <?php endforeach; ?>
+                <?php endif; ?>
             </div>
         </div>
     </section>
@@ -355,95 +412,54 @@ session_start();
             <h2 class="section-title">Recent Discussions</h2>
             <p class="section-subtitle">Latest activity across all forums</p>
             
-            <div class="discussion-list">
-                <!-- Discussion 1 -->
-                <div class="discussion-item glass-card">
-                    <div class="discussion-header">
-                        <div class="discussion-author">
-                            <div class="author-avatar" style="background-image: url('public/images/user1.jpeg');"></div>
-                            <div>
-                                <h4>James Okello</h4>
-                                <small>Posted in Bible Study</small>
+            <div class="discussion-list" id="discussion-list">
+                <?php if(empty($recent_discussions)): ?>
+                    <div class="no-data">
+                        <i class="fas fa-comment-slash"></i>
+                        <h3>No Discussions Yet</h3>
+                        <p>Be the first to start a discussion in our community!</p>
+                        <?php if(isset($_SESSION['user_id'])): ?>
+                            <a href="create-thread.php" class="btn" style="margin-top: 20px;">Start First Discussion</a>
+                        <?php else: ?>
+                            <a href="login.php" class="btn" style="margin-top: 20px;">Login to Start Discussion</a>
+                        <?php endif; ?>
+                    </div>
+                <?php else: ?>
+                    <?php foreach($recent_discussions as $discussion): ?>
+                    <div class="discussion-item glass-card" onclick="window.location.href='forum-discussion.php?thread_id=<?php echo $discussion['id']; ?>'">
+                        <div class="discussion-header">
+                            <div class="discussion-author">
+                                <div class="author-avatar" style="background-image: url('public/images/user-logo.jpg')"></div>
+                                <div>
+                                    <h4><?php echo htmlspecialchars($discussion['author_name']); ?></h4>
+                                    <small>Posted in <?php echo htmlspecialchars($discussion['forum_name']); ?></small>
+                                </div>
+                            </div>
+                            <div class="discussion-meta">
+                                <span><i class="far fa-clock"></i> <?php echo time_elapsed_string($discussion['created_at']); ?></span>
                             </div>
                         </div>
-                        <div class="discussion-meta">
-                            <span><i class="far fa-clock"></i> 2 hours ago</span>
-                        </div>
-                    </div>
-                    <h3>Understanding Romans 8 - The Spirit's Role</h3>
-                    <p class="discussion-excerpt">I've been studying Romans 8 and would love to hear others' perspectives on verses 26-27 about the Spirit interceding for us. How have you experienced this in your prayer life?</p>
-                    <div class="discussion-actions">
-                        <div class="discussion-tags">
-                            <span class="tag">Bible Study</span>
-                            <span class="tag">Romans</span>
-                        </div>
-                        <div class="discussion-stats">
-                            <span><i class="far fa-comment"></i> 14 replies</span>
-                            <span><i class="far fa-eye"></i> 87 views</span>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Discussion 2 -->
-                <div class="discussion-item glass-card">
-                    <div class="discussion-header">
-                        <div class="discussion-author">
-                            <div class="author-avatar" style="background-image: url('public/images/user2.jpeg');"></div>
-                            <div>
-                                <h4>Sarah Nalwoga</h4>
-                                <small>Posted in Prayer Requests</small>
+                        <h3><?php echo htmlspecialchars($discussion['title']); ?></h3>
+                        <p class="discussion-excerpt"><?php echo substr(htmlspecialchars($discussion['content']), 0, 150); ?>...</p>
+                        <div class="discussion-actions">
+                            <div class="discussion-tags">
+                                <span class="tag"><?php echo htmlspecialchars($discussion['forum_name']); ?></span>
+                            </div>
+                            <div class="discussion-stats">
+                                <span><i class="far fa-comment"></i> <?php echo $discussion['reply_count']; ?> replies</span>
+                                <span><i class="far fa-eye"></i> <?php echo $discussion['view_count']; ?> views</span>
                             </div>
                         </div>
-                        <div class="discussion-meta">
-                            <span><i class="far fa-clock"></i> 5 hours ago</span>
-                        </div>
                     </div>
-                    <h3>Prayer for My Mother's Healing</h3>
-                    <p class="discussion-excerpt">Please pray for my mother who was diagnosed with malaria yesterday. She's running a high fever and we're trusting God for complete healing. Thank you church family!</p>
-                    <div class="discussion-actions">
-                        <div class="discussion-tags">
-                            <span class="tag">Prayer</span>
-                            <span class="tag">Healing</span>
-                        </div>
-                        <div class="discussion-stats">
-                            <span><i class="far fa-comment"></i> 23 prayers</span>
-                            <span><i class="far fa-eye"></i> 112 views</span>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Discussion 3 -->
-                <div class="discussion-item glass-card">
-                    <div class="discussion-header">
-                        <div class="discussion-author">
-                            <div class="author-avatar" style="background-image: url('public/images/user3.jpeg');"></div>
-                            <div>
-                                <h4>David Opio</h4>
-                                <small>Posted in Youth Corner</small>
-                            </div>
-                        </div>
-                        <div class="discussion-meta">
-                            <span><i class="far fa-clock"></i> 1 day ago</span>
-                        </div>
-                    </div>
-                    <h3>How Do You Stay Strong in Faith at School?</h3>
-                    <p class="discussion-excerpt">Fellow youth, I'm curious how you maintain your Christian witness in school environments that might not be supportive of faith. What practical tips do you have?</p>
-                    <div class="discussion-actions">
-                        <div class="discussion-tags">
-                            <span class="tag">Youth</span>
-                            <span class="tag">Faith</span>
-                        </div>
-                        <div class="discussion-stats">
-                            <span><i class="far fa-comment"></i> 18 replies</span>
-                            <span><i class="far fa-eye"></i> 145 views</span>
-                        </div>
-                    </div>
-                </div>
+                    <?php endforeach; ?>
+                <?php endif; ?>
             </div>
             
+            <?php if(!empty($recent_discussions)): ?>
             <div style="text-align: center; margin-top: 40px;">
-                <a href="#" class="btn">View All Discussions</a>
+                <a href="all-discussions.php" class="btn">View All Discussions</a>
             </div>
+            <?php endif; ?>
         </div>
     </section>
 
@@ -452,7 +468,11 @@ session_start();
         <div class="container">
             <h2 class="section-title" style="color: white;">Start a Discussion</h2>
             <p>Have a question or topic you'd like to discuss with the church community? Start a new conversation!</p>
-            <a href="#" class="btn" style="background: white; color: var(--primary-color); margin-top: 30px;">New Discussion</a>
+            <?php if(isset($_SESSION['user_id'])): ?>
+                <a href="create-thread.php" class="btn" style="background: white; color: var(--primary-color); margin-top: 30px;">New Discussion</a>
+            <?php else: ?>
+                <a href="login.php" class="btn" style="background: white; color: var(--primary-color); margin-top: 30px;">Login to Start Discussion</a>
+            <?php endif; ?>
         </div>
     </section>
 
@@ -468,11 +488,11 @@ session_start();
             <div class="footer-section">
                 <h3>Quick Links</h3>
                 <ul>
-                    <li><a href="index.html">Home</a></li>
-                    <li><a href="about.html">About Us</a></li>
-                    <li><a href="ministries.html">Ministries</a></li>
-                    <li><a href="forums.html">Forums</a></li>
-                    <li><a href="contact.html">Contact</a></li>
+                    <li><a href="home.php">Home</a></li>
+                    <li><a href="about.php">About Us</a></li>
+                    <li><a href="ministries.php">Ministries</a></li>
+                    <li><a href="forums.php">Forums</a></li>
+                    <li><a href="contact.php">Contact</a></li>
                 </ul>
             </div>
             <div class="footer-section">
@@ -494,5 +514,102 @@ session_start();
     </footer>
 
     <script src="public/js/scripts.js"></script>
+    <script>
+        // Search functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const searchInput = document.getElementById('forum-search');
+            const searchButton = document.getElementById('search-button');
+            const forumCards = document.querySelectorAll('.forum-card');
+            const discussionItems = document.querySelectorAll('.discussion-item');
+            
+            function performSearch() {
+                const searchTerm = searchInput.value.toLowerCase().trim();
+                
+                if (searchTerm === '') {
+                    // Show all items if search is empty
+                    forumCards.forEach(card => {
+                        card.style.display = 'block';
+                    });
+                    discussionItems.forEach(item => {
+                        item.style.display = 'flex';
+                    });
+                    return;
+                }
+                
+                let foundInForums = false;
+                let foundInDiscussions = false;
+                
+                // Search in forum categories
+                forumCards.forEach(card => {
+                    const forumName = card.dataset.forumName || '';
+                    const forumDesc = card.dataset.forumDesc || '';
+                    const cardText = forumName + ' ' + forumDesc;
+                    
+                    if (cardText.includes(searchTerm)) {
+                        card.style.display = 'block';
+                        foundInForums = true;
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+                
+                // Search in recent discussions
+                discussionItems.forEach(item => {
+                    const itemText = item.textContent.toLowerCase();
+                    if (itemText.includes(searchTerm)) {
+                        item.style.display = 'flex';
+                        foundInDiscussions = true;
+                    } else {
+                        item.style.display = 'none';
+                    }
+                });
+                
+                // Show no results message if nothing found
+                showNoResultsMessage(!foundInForums && !foundInDiscussions && searchTerm !== '');
+            }
+            
+            function showNoResultsMessage(show) {
+                // Remove existing no results message
+                const existingMessage = document.getElementById('no-results-message');
+                if (existingMessage) {
+                    existingMessage.remove();
+                }
+                
+                if (show) {
+                    const noResultsMessage = document.createElement('div');
+                    noResultsMessage.id = 'no-results-message';
+                    noResultsMessage.className = 'no-data';
+                    noResultsMessage.innerHTML = `
+                        <i class="fas fa-search"></i>
+                        <h3>No Results Found</h3>
+                        <p>No forums or discussions match your search criteria. Try different keywords.</p>
+                    `;
+                    
+                    // Insert after forum categories
+                    const forumCategories = document.getElementById('forum-categories');
+                    forumCategories.parentNode.insertBefore(noResultsMessage, forumCategories.nextSibling);
+                }
+            }
+            
+            searchButton.addEventListener('click', performSearch);
+            searchInput.addEventListener('keyup', function(e) {
+                if (e.key === 'Enter') {
+                    performSearch();
+                }
+            });
+            
+            // Clear search when input is empty
+            searchInput.addEventListener('input', function() {
+                if (this.value === '') {
+                    performSearch();
+                }
+            });
+            
+            // Make discussion items clickable
+            discussionItems.forEach(item => {
+                item.style.cursor = 'pointer';
+            });
+        });
+    </script>
 </body>
 </html>

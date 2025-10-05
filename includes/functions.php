@@ -104,30 +104,48 @@ if (isset($_POST['login'])) {
         exit;
     }
 
+/*************  ✨ Windsurf Command 🌟  *************/
+    // Fetch user by email and password
+    $stmt = $conn->prepare("SELECT id, email, password FROM $table WHERE email = ?");
     // Fetch user by email
-    $stmt = $conn->prepare("SELECT * FROM $table WHERE email = ?");
+    //$stmt = $conn->prepare("SELECT * FROM $table WHERE email = ?");
     $stmt->bind_param("s", $email);
     $stmt->execute();
     $result = $stmt->get_result();
     $user   = $result->fetch_assoc();
-
+    $pass1= $user['password'];
+    $email1= $user['email'];
+    $id = $user['id'];
     // Validate user existence and password
-    if (!$user || !password_verify($password, $user['password'])) {
+    
+    if(mysqli_num_rows($result) > 0) {
+        if($email === $email1 && $password === $pass1){
+            // Valid user
+            $user = $result->fetch_assoc();
+            // Set session variables
+            
+            // ✅ Set session flags properly
+            $_SESSION['admin']  = ($role === 'admin');
+            $_SESSION['clergy'] = ($role === 'clergy');
+            $_SESSION['member'] = ($role === 'member');
+            $_SESSION['user_id'] = $id;
+
+            echo '<script>alert("Login successful!");</script>';
+            echo "<script>window.location.href = '../home';</script>";
+            exit;
+
+        } else {
+            echo "<script>alert('Invalid email or password!');</script>";
+            echo "<script>window.location.href = '../login';</script>";
+            exit;
+        }
+    } else {
+        // Invalid user
         echo "<script>alert('Invalid email or password!');</script>";
+    }
         echo "<script>window.location.href = '../login';</script>";
         exit;
     }
-
-    // ✅ Set session flags properly
-    $_SESSION['admin']  = ($role === 'admin');
-    $_SESSION['clergy'] = ($role === 'clergy');
-    $_SESSION['member'] = ($role === 'member');
-    $_SESSION['member_id'] = $user['id'];
-
-    // Redirect to home
-    echo "<script>window.location.href = '../home';</script>";
-    exit;
-}
 // Add event
 if (isset($_POST['add-event'])) {    
     $event_name        = $_POST['title'];
