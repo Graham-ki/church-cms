@@ -708,7 +708,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['action'])) {
                 <button class="close-btn">&times;</button>
             </div>
             <div class="modal-body">
-                <form id="new-attendance-form">
+                <!--<form id="new-attendance-form">
                     <div class="filter-group" style="margin-bottom: 15px;">
                         <label for="attendance-type">Attendance Type</label>
                         <select id="attendance-type" class="form-control" required>
@@ -722,7 +722,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['action'])) {
                         <label for="event-select">Select Event</label>
                         <select id="event-select" class="form-control">
                             <option value="">Select Event</option>
-                            <!-- Events will be populated by JavaScript -->
+                            <!-- Events will be populated by JavaScript 
                         </select>
                     </div>
                     
@@ -733,14 +733,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['action'])) {
                     
                     <div class="filter-group" style="margin-bottom: 15px;">
                         <label for="attendance-date">Date</label>
-                        <input type="date" id="attendance-date" class="form-control" value="<?php echo date('Y-m-d'); ?>" required>
+                        <input type="date" id="attendance-date" class="form-control" value="<?php //echo date('Y-m-d'); ?>" required>
                     </div>
                     
                     <div style="text-align: right; margin-top: 20px;">
                         <button type="button" class="btn btn-secondary" id="cancel-new-attendance">Cancel</button>
                         <button type="submit" class="btn btn-accent">Continue</button>
                     </div>
-                </form>
+                </form>-->
+                                        <p style="
+  text-align: center;
+  margin: 25px auto;
+  padding: 15px 20px;
+  background: #e8f4ff;
+  color: #0b5ed7;
+  border: 1px solid #b6daff;
+  border-radius: 8px;
+  font-family: 'Poppins', sans-serif;
+  font-size: 15px;
+  font-weight: 500;
+  width: fit-content;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+">
+  💡 Visit dashboard quick actions to take attendance! 
+  <a href="index.php" style="
+    color: #0b5ed7;
+    text-decoration: none;
+    font-weight: 600;
+    margin-left: 5px;
+  ">
+    Continue <i class="fas fa-arrow-right"></i>
+  </a>
+</p>
+
             </div>
         </div>
     </div>

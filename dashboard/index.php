@@ -601,7 +601,7 @@ include_once '../config/db.php';
                             if (mysqli_num_rows($result) > 0) {
                                 while ($member = mysqli_fetch_assoc($result)) {
                                     echo '<div class="member-item">';
-                                    echo '<div class="member-avatar" style="background-image: url(\'../public/images/' . $member['profile_pic'] . '\');"></div>';
+                                    echo '<div class="member-avatar" style="background-image: url(../public/images/user-logo.jpg);"></div>';
                                     echo '<div class="member-name">' . $member['first_name'] . ' ' . $member['last_name'] . '</div>';
                                     echo '<input type="checkbox" name="members[]" class="member-checkbox" value="' . $member['id'] . '">';
                                     echo '</div>';
