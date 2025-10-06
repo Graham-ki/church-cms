@@ -291,7 +291,7 @@ function time_elapsed_string($datetime, $full = false) {
                                     <?php endif; ?>
                                 </h3>
                                 <div class="thread-author">
-                                    <div class="author-avatar" style="background-image: url('public/images/avatars/<?php echo $thread['avatar'] ?: 'default.png'; ?>');"></div>
+                                    <div class="author-avatar" style="background-image: url('public/images/user-logo.jpg');"></div>
                                     <div>
                                         <div style="font-weight: 500;"><?php echo htmlspecialchars($thread['author_name']); ?></div>
                                         <small><?php echo time_elapsed_string($thread['created_at']); ?></small>

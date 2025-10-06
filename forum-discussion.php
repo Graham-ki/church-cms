@@ -78,10 +78,12 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action'])) {
             $messages_sql = "SELECT tm.*, u.username as author_name, u.avatar,
                                     (SELECT COUNT(*) FROM message_likes WHERE message_id = tm.id) as like_count,
                                     (SELECT COUNT(*) FROM thread_messages WHERE parent_id = tm.id) as reply_count,
-                                    p.username as parent_author
+                                    parent_u.username as parent_author_name,
+                                    parent_u.id as parent_author_id
                              FROM thread_messages tm
                              LEFT JOIN users u ON tm.author_id = u.id
-                             LEFT JOIN users p ON tm.parent_id = (SELECT id FROM thread_messages WHERE id = tm.parent_id)
+                             LEFT JOIN thread_messages parent_msg ON tm.parent_id = parent_msg.id
+                             LEFT JOIN users parent_u ON parent_msg.author_id = parent_u.id
                              WHERE tm.thread_id = $thread_id AND tm.is_deleted = 0
                              ORDER BY tm.created_at ASC";
             $messages_result = mysqli_query($conn, $messages_sql);
@@ -142,10 +144,12 @@ if($thread) {
     $messages_sql = "SELECT tm.*, u.name as author_name, u.avatar,
                             (SELECT COUNT(*) FROM message_likes WHERE message_id = tm.id) as like_count,
                             (SELECT COUNT(*) FROM thread_messages WHERE parent_id = tm.id) as reply_count,
-                            p.name as parent_author
+                            parent_u.name as parent_author_name,
+                            parent_u.id as parent_author_id
                      FROM thread_messages tm
                      LEFT JOIN users u ON tm.author_id = u.id
-                     LEFT JOIN users p ON tm.parent_id = (SELECT id FROM thread_messages WHERE id = tm.parent_id)
+                     LEFT JOIN thread_messages parent_msg ON tm.parent_id = parent_msg.id
+                     LEFT JOIN users parent_u ON parent_msg.author_id = parent_u.id
                      WHERE tm.thread_id = $thread_id AND tm.is_deleted = 0
                      ORDER BY tm.created_at ASC";
     $messages_result = mysqli_query($conn, $messages_sql);
@@ -411,6 +415,9 @@ function time_elapsed_string($datetime, $full = false) {
             margin-top: 15px;
             padding-left: 20px;
             border-left: 3px solid var(--accent-color);
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            margin-left: 10px;
         }
         
         .reply-indicator {
@@ -420,6 +427,7 @@ function time_elapsed_string($datetime, $full = false) {
             display: flex;
             align-items: center;
             gap: 5px;
+            font-weight: 600;
         }
         
         .message-actions {
@@ -835,7 +843,7 @@ function time_elapsed_string($datetime, $full = false) {
                                 <div class="message-text">
                                     <?php if($message['parent_id']): ?>
                                     <div class="reply-indicator">
-                                        <i class="fas fa-reply"></i> Replying to <?php echo htmlspecialchars($message['parent_author']); ?>
+                                        <i class="fas fa-reply"></i> Replying to <?php echo htmlspecialchars($message['parent_author_name']); ?>
                                     </div>
                                     <?php endif; ?>
                                     <p><?php echo nl2br(htmlspecialchars($message['content'])); ?></p>
@@ -1067,7 +1075,7 @@ function time_elapsed_string($datetime, $full = false) {
                                 <div class="message-text">
                                     ${message.parent_id ? `
                                     <div class="reply-indicator">
-                                        <i class="fas fa-reply"></i> Replying to ${escapeHtml(message.parent_author)}
+                                        <i class="fas fa-reply"></i> Replying to ${escapeHtml(message.parent_author_name)}
                                     </div>
                                     ` : ''}
                                     <p>${escapeHtml(message.content).replace(/\n/g, '<br>')}</p>
