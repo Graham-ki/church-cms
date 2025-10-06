@@ -37,15 +37,18 @@ function getEventsFromAttendance($conn) {
     return $events;
 }
 
-// Function to get attendance details for a specific event
+// Function to get attendance details for a specific event - CORRECTED VERSION
 function getAttendanceDetails($conn, $eventId = null, $service = null, $date = null) {
     if ($eventId && $eventId != '0') {
+        // For events with event_id
         $sql = "SELECT a.*, 
                        m.first_name, 
                        m.last_name, 
                        m.phone, 
+                       m.email,
                        e.title as event_name, 
-                       e.location
+                       e.location,
+                       'present' as status
                 FROM attendance a 
                 JOIN members m ON a.member_id = m.id 
                 LEFT JOIN events e ON a.event_id = e.id 
@@ -53,13 +56,16 @@ function getAttendanceDetails($conn, $eventId = null, $service = null, $date = n
         $stmt = mysqli_prepare($conn, $sql);
         mysqli_stmt_bind_param($stmt, "i", $eventId);
     } else {
+        // For services without event_id
         $sql = "SELECT a.*, 
                        m.first_name, 
                        m.last_name, 
                        m.phone, 
+                       m.email,
                        a.service as event_name, 
                        a.service as type, 
-                       'Main Hall' as location
+                       'Main Hall' as location,
+                       'present' as status
                 FROM attendance a 
                 JOIN members m ON a.member_id = m.id 
                 WHERE a.service = ? AND a.date = ?";
@@ -208,24 +214,29 @@ function saveAttendance($conn, $attendanceData) {
             
             if ($existing) {
                 // Update existing record
-                $updateSql = "UPDATE attendance SET status = ? WHERE id = ?";
+                $updateSql = "UPDATE attendance SET attended = ? WHERE id = ?";
                 $stmt = mysqli_prepare($conn, $updateSql);
-                mysqli_stmt_bind_param($stmt, "si", $record['status'], $existing['id']);
+                $attended = $record['status'] === 'present' ? '1' : '0';
+                mysqli_stmt_bind_param($stmt, "si", $attended, $existing['id']);
             } else {
-                // Insert new record
-                $insertSql = "INSERT INTO attendance (event_id, service, member_id, date, status, created_at) 
-                             VALUES (?, ?, ?, ?, ?, NOW())";
-                $stmt = mysqli_prepare($conn, $insertSql);
-                mysqli_stmt_bind_param($stmt, "isiss", 
-                    $record['event_id'], 
-                    $record['service'], 
-                    $record['member_id'], 
-                    $record['date'], 
-                    $record['status']
-                );
+                // Insert new record only if present
+                if ($record['status'] === 'present') {
+                    $insertSql = "INSERT INTO attendance (event_id, service, member_id, date, attended, created_at) 
+                                 VALUES (?, ?, ?, ?, '1', NOW())";
+                    $stmt = mysqli_prepare($conn, $insertSql);
+                    mysqli_stmt_bind_param($stmt, "isss", 
+                        $record['event_id'], 
+                        $record['service'], 
+                        $record['member_id'], 
+                        $record['date']
+                    );
+                    mysqli_stmt_execute($stmt);
+                }
             }
             
-            mysqli_stmt_execute($stmt);
+            if (isset($stmt) && $stmt) {
+                mysqli_stmt_execute($stmt);
+            }
         }
         
         // Commit transaction
@@ -708,40 +719,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['action'])) {
                 <button class="close-btn">&times;</button>
             </div>
             <div class="modal-body">
-                <!--<form id="new-attendance-form">
-                    <div class="filter-group" style="margin-bottom: 15px;">
-                        <label for="attendance-type">Attendance Type</label>
-                        <select id="attendance-type" class="form-control" required>
-                            <option value="">Select Type</option>
-                            <option value="event">Event</option>
-                            <option value="service">Service</option>
-                        </select>
-                    </div>
-                    
-                    <div id="event-selection" class="filter-group" style="margin-bottom: 15px; display: none;">
-                        <label for="event-select">Select Event</label>
-                        <select id="event-select" class="form-control">
-                            <option value="">Select Event</option>
-                            <!-- Events will be populated by JavaScript 
-                        </select>
-                    </div>
-                    
-                    <div id="service-selection" class="filter-group" style="margin-bottom: 15px; display: none;">
-                        <label for="service-name">Service Name</label>
-                        <input type="text" id="service-name" class="form-control" placeholder="Enter service name">
-                    </div>
-                    
-                    <div class="filter-group" style="margin-bottom: 15px;">
-                        <label for="attendance-date">Date</label>
-                        <input type="date" id="attendance-date" class="form-control" value="<?php //echo date('Y-m-d'); ?>" required>
-                    </div>
-                    
-                    <div style="text-align: right; margin-top: 20px;">
-                        <button type="button" class="btn btn-secondary" id="cancel-new-attendance">Cancel</button>
-                        <button type="submit" class="btn btn-accent">Continue</button>
-                    </div>
-                </form>-->
-                                        <p style="
+                <p style="
   text-align: center;
   margin: 25px auto;
   padding: 15px 20px;
@@ -765,7 +743,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['action'])) {
     Continue <i class="fas fa-arrow-right"></i>
   </a>
 </p>
-
             </div>
         </div>
     </div>
@@ -798,10 +775,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['action'])) {
         const takeAttendanceBtn = document.getElementById('take-attendance-btn');
         const takeAttendanceFirstBtn = document.getElementById('take-attendance-first-btn');
         const cancelNewAttendanceBtn = document.getElementById('cancel-new-attendance');
-        const newAttendanceForm = document.getElementById('new-attendance-form');
-        const attendanceType = document.getElementById('attendance-type');
-        const eventSelection = document.getElementById('event-selection');
-        const serviceSelection = document.getElementById('service-selection');
 
         // Current state
         let currentEvent = null;
@@ -885,22 +858,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['action'])) {
                 });
             }
 
-            // New attendance form
-            if (newAttendanceForm) {
-                newAttendanceForm.addEventListener('submit', handleNewAttendance);
-            }
+            // Pagination event handlers
+            document.getElementById('prev-page')?.addEventListener('click', () => {
+                if (currentPage > 1) {
+                    currentPage--;
+                    renderAttendanceTable();
+                }
+            });
 
-            // Attendance type change
-            if (attendanceType) {
-                attendanceType.addEventListener('change', function() {
-                    eventSelection.style.display = this.value === 'event' ? 'block' : 'none';
-                    serviceSelection.style.display = this.value === 'service' ? 'block' : 'none';
-                    
-                    if (this.value === 'event') {
-                        loadEventsForSelection();
-                    }
-                });
-            }
+            document.getElementById('next-page')?.addEventListener('click', () => {
+                const totalPages = Math.ceil(currentAttendance.length / membersPerPage);
+                if (currentPage < totalPages) {
+                    currentPage++;
+                    renderAttendanceTable();
+                }
+            });
         }
 
         // Get color based on event type
@@ -932,13 +904,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['action'])) {
         // Open take attendance modal
         function openTakeAttendanceModal() {
             takeAttendanceModal.style.display = 'flex';
-            // Reset form
-            newAttendanceForm.reset();
-            eventSelection.style.display = 'none';
-            serviceSelection.style.display = 'none';
         }
 
-        // Fetch attendance details from server
+        // Fetch attendance details from server - CORRECTED VERSION
         async function fetchAttendanceDetails(event) {
             try {
                 const params = new URLSearchParams();
@@ -953,7 +921,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['action'])) {
                 const response = await fetch(`?${params.toString()}`);
                 if (!response.ok) throw new Error('Network response was not ok');
                 
-                currentAttendance = await response.json();
+                const attendedMembers = await response.json();
+                
+                // Create a map of members who attended
+                const attendanceMap = {};
+                attendedMembers.forEach(record => {
+                    attendanceMap[record.member_id] = {
+                        status: 'present',
+                        record: record
+                    };
+                });
+                
+                // Merge with all members to create complete attendance list
+                currentAttendance = allMembers.map(member => {
+                    if (attendanceMap[member.id]) {
+                        return {
+                            ...member,
+                            status: 'present',
+                            ...attendanceMap[member.id].record
+                        };
+                    } else {
+                        return {
+                            ...member,
+                            status: 'absent',
+                            member_id: member.id,
+                            event_id: event.eventId !== '0' ? parseInt(event.eventId) : null,
+                            service: event.service,
+                            date: event.date
+                        };
+                    }
+                });
+                
                 renderAttendanceTable();
             } catch (error) {
                 console.error('Error fetching attendance details:', error);
@@ -961,20 +959,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['action'])) {
             }
         }
 
-        // Render attendance table
+        // Render attendance table - UPDATED VERSION
         function renderAttendanceTable() {
             attendanceTableBody.innerHTML = '';
             
-            if (allMembers.length === 0) {
-                attendanceTableBody.innerHTML = '<tr><td colspan="4" class="loading">No members found</td></tr>';
+            if (currentAttendance.length === 0) {
+                attendanceTableBody.innerHTML = '<tr><td colspan="4" class="loading">No attendance data found</td></tr>';
                 return;
             }
-            
-            // Create a map of member attendance for quick lookup
-            const attendanceMap = {};
-            currentAttendance.forEach(record => {
-                attendanceMap[record.member_id] = record.status;
-            });
             
             // Calculate summary
             let presentCount = 0;
@@ -983,10 +975,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['action'])) {
             // Get current page members
             const startIndex = (currentPage - 1) * membersPerPage;
             const endIndex = startIndex + membersPerPage;
-            const currentMembers = allMembers.slice(startIndex, endIndex);
+            const currentMembers = currentAttendance.slice(startIndex, endIndex);
             
             currentMembers.forEach(member => {
-                const status = attendanceMap[member.id] || 'absent';
+                const status = member.status || 'absent';
                 if (status === 'present') presentCount++;
                 else absentCount++;
                 
@@ -1063,40 +1055,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['action'])) {
             return colors[seed % colors.length];
         }
 
-        // Update attendance status for a member
+        // Update attendance status for a member - UPDATED VERSION
         function updateAttendanceStatus(memberId, status) {
-            // Update local state
-            const existingIndex = currentAttendance.findIndex(record => record.member_id === memberId);
+            // Find the member in currentAttendance
+            const memberIndex = currentAttendance.findIndex(member => member.member_id === memberId || member.id === memberId);
             
-            if (existingIndex !== -1) {
-                currentAttendance[existingIndex].status = status;
-            } else {
-                currentAttendance.push({
-                    member_id: memberId,
-                    status: status,
-                    event_id: currentEvent.eventId !== '0' ? parseInt(currentEvent.eventId) : null,
-                    service: currentEvent.service,
-                    date: currentEvent.date
-                });
+            if (memberIndex !== -1) {
+                // Update the status
+                currentAttendance[memberIndex].status = status;
+                
+                // If marking as present and this was originally an absent member (no attendance record)
+                if (status === 'present' && !currentAttendance[memberIndex].attended) {
+                    // Add the attended flag to indicate this is a new attendance record
+                    currentAttendance[memberIndex].attended = '1';
+                }
             }
         }
 
         // Update attendance summary in modal
         function updateAttendanceSummary() {
             const presentCount = currentAttendance.filter(record => record.status === 'present').length;
-            modalTotal.textContent = allMembers.length;
+            modalTotal.textContent = currentAttendance.length;
             modalPresent.textContent = presentCount;
-            modalAbsent.textContent = allMembers.length - presentCount;
+            modalAbsent.textContent = currentAttendance.length - presentCount;
         }
 
         // Update pagination
         function updatePagination() {
-            const totalPages = Math.ceil(allMembers.length / membersPerPage);
+            const totalPages = Math.ceil(currentAttendance.length / membersPerPage);
             const attendanceCount = document.getElementById('attendance-count');
             if (attendanceCount) {
                 const startIndex = (currentPage - 1) * membersPerPage + 1;
-                const endIndex = Math.min(currentPage * membersPerPage, allMembers.length);
-                attendanceCount.textContent = `Showing ${startIndex}-${endIndex} of ${allMembers.length} members`;
+                const endIndex = Math.min(currentPage * membersPerPage, currentAttendance.length);
+                attendanceCount.textContent = `Showing ${startIndex}-${endIndex} of ${currentAttendance.length} members`;
             }
             
             // Update button states
@@ -1142,8 +1133,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['action'])) {
 
         // Mark all members with specified status
         function markAllMembers(status) {
-            allMembers.forEach(member => {
-                updateAttendanceStatus(member.id, status);
+            currentAttendance.forEach(member => {
+                member.status = status;
             });
             
             renderAttendanceTable();
@@ -1152,14 +1143,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['action'])) {
         // Save attendance to server
         async function saveAttendance() {
             try {
-                // Prepare data for saving
-                const attendanceData = currentAttendance.map(record => ({
-                    member_id: record.member_id,
-                    event_id: record.event_id,
-                    service: record.service,
-                    date: record.date,
-                    status: record.status
-                }));
+                // Prepare data for saving - only include records that are marked as present
+                const attendanceData = currentAttendance
+                    .filter(record => record.status === 'present')
+                    .map(record => ({
+                        member_id: record.member_id || record.id,
+                        event_id: record.event_id,
+                        service: record.service,
+                        date: record.date,
+                        status: record.status
+                    }));
 
                 const response = await fetch('', {
                     method: 'POST',
@@ -1319,93 +1312,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['action'])) {
             // Reload original events
             renderFilteredEvents(initialEvents);
         }
-
-        // Load events for selection in take attendance modal
-        async function loadEventsForSelection() {
-            try {
-                const response = await fetch('?action=get_events');
-                if (!response.ok) throw new Error('Network response was not ok');
-                
-                const events = await response.json();
-                const eventSelect = document.getElementById('event-select');
-                
-                eventSelect.innerHTML = '<option value="">Select Event</option>';
-                events.forEach(event => {
-                    const eventName = event.event_name || event.service;
-                    const option = document.createElement('option');
-                    option.value = event.event_id || '0';
-                    option.textContent = `${eventName} (${new Date(event.date).toLocaleDateString()})`;
-                    eventSelect.appendChild(option);
-                });
-            } catch (error) {
-                console.error('Error loading events:', error);
-            }
-        }
-
-        // Handle new attendance form submission
-        function handleNewAttendance(e) {
-            e.preventDefault();
-            
-            const type = attendanceType.value;
-            const date = document.getElementById('attendance-date').value;
-            
-            if (!type || !date) {
-                alert('Please fill in all required fields.');
-                return;
-            }
-            
-            if (type === 'event') {
-                const eventId = document.getElementById('event-select').value;
-                if (!eventId) {
-                    alert('Please select an event.');
-                    return;
-                }
-                
-                // Find the selected event
-                const selectedEvent = initialEvents.find(event => event.event_id == eventId);
-                if (selectedEvent) {
-                    currentEvent = {
-                        eventId: selectedEvent.event_id,
-                        service: selectedEvent.service,
-                        date: date,
-                        eventName: selectedEvent.event_name || selectedEvent.service
-                    };
-                    takeAttendanceModal.style.display = 'none';
-                    openAttendanceModal(currentEvent);
-                }
-            } else if (type === 'service') {
-                const serviceName = document.getElementById('service-name').value;
-                if (!serviceName) {
-                    alert('Please enter a service name.');
-                    return;
-                }
-                
-                currentEvent = {
-                    eventId: '0',
-                    service: serviceName,
-                    date: date,
-                    eventName: serviceName
-                };
-                takeAttendanceModal.style.display = 'none';
-                openAttendanceModal(currentEvent);
-            }
-        }
-
-        // Pagination event handlers
-        document.getElementById('prev-page')?.addEventListener('click', () => {
-            if (currentPage > 1) {
-                currentPage--;
-                renderAttendanceTable();
-            }
-        });
-
-        document.getElementById('next-page')?.addEventListener('click', () => {
-            const totalPages = Math.ceil(allMembers.length / membersPerPage);
-            if (currentPage < totalPages) {
-                currentPage++;
-                renderAttendanceTable();
-            }
-        });
     </script>
 </body>
 </html>
