@@ -266,6 +266,22 @@ include_once 'config/db.php';
             <div class="events-grid">
                 <!-- Event 1 -->
                  <?php
+                if(isset($_GET['event_id'])){
+                    $event_id = $_GET['event_id'];
+                    if(isset($_SESSION['user_id'])){
+                        $add_participant = $conn->query("INSERT INTO attendance (event_id, member_id) VALUES ('$event_id', '{$_SESSION['user_id']}')");
+                        if($add_participant){
+                            echo '<script>alert("Successfully registered for this event!");</script>';
+                        } else {
+                            echo '<script>alert("Error registering for event. Please try again.");</script>';
+                        }
+                    }else
+
+                    {
+                        echo '<script>alert("You must be logged in to register for events.");</script>';
+                    }
+                }
+
                  $events = $conn->query("SELECT * FROM events WHERE category = 'Worship' ORDER BY start_date ASC");
                  while(mysqli_num_rows($events) > 0 && $event = mysqli_fetch_assoc($events)){
                     $startDate = date('d M', strtotime($event['start_date']));
@@ -296,7 +312,9 @@ include_once 'config/db.php';
                             <i class="fas fa-map-marker-alt"></i> '.$location.'
                         </div>
                         <p class="event-desc">'.$description.'</p>
-                        
+                        <div class="event-actions">
+                            <a href="events.php?event_id='.$event['id'].'" style="margin-bottom: 10px; display: inline-block; padding: 10px 20px; background-color: #007BFF; color: #fff; text-decoration: none; border-radius: 5px;    font-weight: bold;">Take Part</a>
+                        </div>
                     </div>  
                 </div>
                     ';      
@@ -358,7 +376,9 @@ include_once 'config/db.php';
                             <i class="fas fa-map-marker-alt"></i> '.$location.'
                         </div>
                         <p class="event-desc">'.$description.'</p>
-                        
+                        <div class="event-actions">
+                            <a href="events.php?event_id='.$event['id'].'" style="margin-bottom: 10px; display: inline-block; padding: 10px 20px; background-color: #007BFF; color: #fff; text-decoration: none; border-radius: 5px; font-weight: bold; ">Take Part</a>
+                        </div>
                     </div>
                 </div>
                     ';      
@@ -420,7 +440,9 @@ include_once 'config/db.php';
                             <i class="fas fa-map-marker-alt"></i> '.$location.'                    
                         </div>                    
                         <p class="event-desc">'.$description.'</p>                    
-                                            
+                        <div class="event-actions">                    
+                            <a href="events.php?event_id='.$event['id'].'" style="margin-bottom: 10px; display: inline-block; padding: 10px 20px; background-color: #007BFF; color: #fff; text-decoration: none; border-radius: 5px; font-weight: bold;">Take Part</a>                    
+                        </div>              
                     </div>                
                 </div>
                     ';  
@@ -481,7 +503,9 @@ include_once 'config/db.php';
                             <i class="fas fa-map-marker-alt"></i> '.$location.'                    
                         </div>                    
                         <p class="event-desc">'.$description.'</p>                    
-                                           
+                        <div class="event-actions">
+                            <a href="events.php?event_id='.$event['id'].'" style="margin-bottom: 10px; display: inline-block; padding: 10px 20px; background-color: #007BFF; color: #fff; text-decoration: none; border-radius: 5px; font-weight: bold;">Take Part</a>                    
+                        </div>              
                     </div>                
                 </div>
                     ';
@@ -542,7 +566,9 @@ include_once 'config/db.php';
                             <i class="fas fa-map-marker-alt"></i> '.$location.'                    
                         </div>                    
                         <p class="event-desc">'.$description.'</p>                    
-                                           
+                        <div class="event-actions">
+                            <a href="events.php?event_id='.$event['id'].'" style="margin-bottom: 10px; display: inline-block; padding: 10px 20px; background-color: #007BFF; color: #fff; text-decoration: none; border-radius: 5px; font-weight: bold;">Take Part</a>                    
+                        </div>             
                     </div>                
                 </div>
                     ';  

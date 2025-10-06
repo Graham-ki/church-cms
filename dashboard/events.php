@@ -47,6 +47,32 @@ function getEventById($id) {
     return null;
 }
 
+// NEW FUNCTION: Get event attendees with member details
+function getEventAttendees($eventId) {
+    global $conn;
+    
+    $sql = "SELECT m.first_name, m.last_name, m.phone, m.address 
+            FROM attendance a 
+            JOIN members m ON a.member_id = m.id 
+            WHERE a.event_id = ?
+            ORDER BY m.first_name, m.last_name";
+    
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("i", $eventId);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    
+    $attendees = [];
+    
+    if ($result && $result->num_rows > 0) {
+        while($row = $result->fetch_assoc()) {
+            $attendees[] = $row;
+        }
+    }
+    
+    return $attendees;
+}
+
 // Function to get events for a specific month
 function getEventsByMonth($year, $month) {
     global $conn;
@@ -197,6 +223,18 @@ if (isset($_GET['delete_id'])) {
     // Then redirect back to avoid resubmission
     header("Location: events.php?deleted=true");
     exit();
+}
+
+// Handle AJAX request for attendees
+if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['action']) && $_GET['action'] === 'get_attendees') {
+    $eventId = isset($_GET['event_id']) ? (int)$_GET['event_id'] : 0;
+    
+    if ($eventId > 0) {
+        $attendees = getEventAttendees($eventId);
+        header('Content-Type: application/json');
+        echo json_encode($attendees);
+        exit();
+    }
 }
 ?>
 <!DOCTYPE html>
@@ -503,6 +541,65 @@ if (isset($_GET['delete_id'])) {
             justify-content: flex-end;
             gap: 10px;
         }
+        
+        /* NEW: Attendees modal styles */
+        .attendees-modal .modal-content {
+            max-width: 500px;
+        }
+        
+        .attendees-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .attendee-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .attendee-info {
+            flex: 1;
+        }
+        
+        .attendee-name {
+            font-weight: 500;
+            margin-bottom: 3px;
+        }
+        
+        .attendee-details {
+            font-size: 0.85rem;
+            color: #666;
+        }
+        
+        .no-attendees {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+        
+        .no-attendees i {
+            font-size: 2rem;
+            margin-bottom: 10px;
+            color: #ccc;
+        }
+        
+        .view-attendees-btn {
+            background: rgba(74, 111, 165, 0.1);
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            color: var(--primary-color);
+            transition: all 0.3s ease;
+        }
+        
+        .view-attendees-btn:hover {
+            background: rgba(74, 111, 165, 0.2);
+        }
     </style>
 </head>
 <body>
@@ -652,6 +749,7 @@ if (isset($_GET['delete_id'])) {
                                     <div class="event-actions">
                                         <button class="edit-event" data-event-id="'.$event['id'].'" title="Edit"><i class="fas fa-edit"></i></button>
                                         <button class="delete-event" data-event-id="'.$event['id'].'" data-event-title="'.htmlspecialchars($event['title']).'" title="Delete"><i class="fas fa-trash"></i></button>
+                                        <button class="view-attendees-btn" data-event-id="'.$event['id'].'" data-event-title="'.htmlspecialchars($event['title']).'" title="View Attendees"><i class="fas fa-user-check"></i>View Participants</button>
                                         <button title="Share"><i class="fas fa-share"></i></button>
                                     </div>
                                 </div>
@@ -803,6 +901,24 @@ if (isset($_GET['delete_id'])) {
         </div>
     </div>
     
+    <!-- NEW: Attendees Modal -->
+    <div class="modal attendees-modal" id="attendees-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="attendees-modal-title">Event Attendees</h2>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="attendees-list" id="attendees-list">
+                    <!-- Attendees will be loaded here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn" id="attendees-close">Close</button>
+            </div>
+        </div>
+    </div>
+    
     <!-- Delete Confirmation Modal -->
     <div class="modal delete-confirm-modal" id="delete-confirm-modal">
         <div class="modal-content">
@@ -847,12 +963,14 @@ if (isset($_GET['delete_id'])) {
             // Modal functionality
             const eventModal = document.getElementById('event-modal');
             const eventDetailModal = document.getElementById('event-detail-modal');
+            const attendeesModal = document.getElementById('attendees-modal');
             const deleteModal = document.getElementById('delete-confirm-modal');
             const newEventBtn = document.getElementById('new-event-btn');
             const addEventBtn = document.getElementById('add-event-btn');
             const closeModalButtons = document.querySelectorAll('.close-modal');
             const cancelEvent = document.getElementById('cancel-event');
             const eventDetailClose = document.getElementById('event-detail-close');
+            const attendeesClose = document.getElementById('attendees-close');
             const deleteCancel = document.getElementById('delete-cancel');
             
             function openModal(modal) {
@@ -868,6 +986,7 @@ if (isset($_GET['delete_id'])) {
             function closeAllModals() {
                 closeModalFunc(eventModal);
                 closeModalFunc(eventDetailModal);
+                closeModalFunc(attendeesModal);
                 closeModalFunc(deleteModal);
             }
             
@@ -898,6 +1017,10 @@ if (isset($_GET['delete_id'])) {
             
             eventDetailClose.addEventListener('click', function() {
                 closeModalFunc(eventDetailModal);
+            });
+            
+            attendeesClose.addEventListener('click', function() {
+                closeModalFunc(attendeesModal);
             });
             
             deleteCancel.addEventListener('click', function() {
@@ -937,6 +1060,15 @@ if (isset($_GET['delete_id'])) {
                     document.getElementById('delete-event-title').textContent = eventTitle;
                     document.getElementById('delete-confirm').href = `?delete_id=${eventId}`;
                     openModal(deleteModal);
+                });
+            });
+            
+            // NEW: View attendees buttons
+            document.querySelectorAll('.view-attendees-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const eventId = this.dataset.eventId;
+                    const eventTitle = this.dataset.eventTitle;
+                    fetchEventAttendees(eventId, eventTitle);
                 });
             });
             
@@ -1001,6 +1133,56 @@ if (isset($_GET['delete_id'])) {
                     document.getElementById('event-detail-description').textContent = event.description || 'No description provided.';
                     
                     openModal(eventDetailModal);
+                }
+            }
+            
+            // NEW: Function to fetch event attendees
+            async function fetchEventAttendees(eventId, eventTitle) {
+                try {
+                    document.getElementById('attendees-modal-title').textContent = `Attendees - ${eventTitle}`;
+                    document.getElementById('attendees-list').innerHTML = '<div class="loading">Loading attendees...</div>';
+                    
+                    openModal(attendeesModal);
+                    
+                    const response = await fetch(`?action=get_attendees&event_id=${eventId}`);
+                    if (!response.ok) throw new Error('Network response was not ok');
+                    
+                    const attendees = await response.json();
+                    
+                    if (attendees.length > 0) {
+                        let attendeesHTML = '';
+                        attendees.forEach(attendee => {
+                            attendeesHTML += `
+                                <div class="attendee-item">
+                                    <div class="attendee-info">
+                                        <div class="attendee-name">${attendee.first_name} ${attendee.last_name}</div>
+                                        <div class="attendee-details">
+                                            ${attendee.phone ? `<div><i class="fas fa-phone"></i> ${attendee.phone}</div>` : ''}
+                                            ${attendee.address ? `<div><i class="fas fa-map-marker-alt"></i> ${attendee.address}</div>` : ''}
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                        });
+                        document.getElementById('attendees-list').innerHTML = attendeesHTML;
+                    } else {
+                        document.getElementById('attendees-list').innerHTML = `
+                            <div class="no-attendees">
+                                <i class="fas fa-users-slash"></i>
+                                <h3>No Attendees</h3>
+                                <p>No one has attended this event yet.</p>
+                            </div>
+                        `;
+                    }
+                } catch (error) {
+                    console.error('Error fetching attendees:', error);
+                    document.getElementById('attendees-list').innerHTML = `
+                        <div class="no-attendees">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <h3>Error Loading Attendees</h3>
+                            <p>Please try again later.</p>
+                        </div>
+                    `;
                 }
             }
             
