@@ -10,6 +10,7 @@ include_once 'config/db.php';
     <title>St. Stephen C.O.U - Church Management System</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="public/css/styles.css">
+    
 </head>
 <body>
     <!-- Navigation Bar -->
@@ -51,29 +52,35 @@ include_once 'config/db.php';
     </nav>
 
     <!-- Hero Banner with Slideshow -->
-    <section class="hero">
+   <section class="hero">
         <div class="slideshow-container">
-            <div class="slide active">
+            <!-- First slide with local background image -->
+            <div class="slide active" style="background-image: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('public/images/church1.jpg');">
                 <div class="slide-content">
                     <h1>Welcome to St. Stephen C.O.U</h1>
                     <p>Join us in worship and fellowship every Sunday at 9:00 AM</p>
                     <a href="service-schedule" class="btn">Learn More</a>
                 </div>
             </div>
-            <div class="slide">
+            
+            <!-- Second slide with local background image -->
+            <div class="slide" style="background-image: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('public/images/church2.jpg');">
                 <div class="slide-content">
                     <h1>Growing Together in Faith</h1>
                     <p>Discover our Bible study groups and spiritual growth programs</p>
                     <a href="forum" class="btn">Join a Group</a>
                 </div>
             </div>
-            <div class="slide">
+            
+            <!-- Third slide with local background image -->
+            <div class="slide" style="background-image: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('public/images/church3.jpg');">
                 <div class="slide-content">
                     <h1>Serving Our Community</h1>
                     <p>Find out how you can participate in our outreach programs</p>
                     <a href="events" class="btn">Volunteer</a>
                 </div>
             </div>
+            
             <div class="slide-controls">
                 <button class="prev"><i class="fas fa-chevron-left"></i></button>
                 <div class="dots">
@@ -147,7 +154,6 @@ include_once 'config/db.php';
                         echo '<span class="comm-date">' . date('F j, Y', strtotime($comm['sent_at'])) . '</span>';
                         echo '</div>';
                         echo '<p>' . $comm['message'] . '</p>';
-                        echo '<a href="index.php?comm_id=' . $comm['id'] . '" class="comm-link">Read More <i class="fas fa-arrow-right"></i></a>';
                         echo '</div>';
                     }
                 } else {
@@ -229,5 +235,6 @@ include_once 'config/db.php';
     </footer>
 
     <script src="public/js/scripts.js"></script>
+    
 </body>
 </html>

@@ -215,15 +215,15 @@ a {
 }
 
 .slide:nth-child(1) {
-    background-image: url('public/images/church1.jpg');
+    background-image: url('../public/images/church1.jpg');
 }
 
 .slide:nth-child(2) {
-    background-image: url('public/images/church2.jpg');
+    background-image: url('../public/images/church2.jpg');
 }
 
 .slide:nth-child(3) {
-    background-image: url('public/images/church3.jpg');
+    background-image: url('../public/images/church3.jpg');
 }
 
 .slide.active {
