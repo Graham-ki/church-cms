@@ -430,7 +430,7 @@ include '../config/db.php';
                         <tr>
                             <td>
                                 <div class="member-info">
-                                    <div class="member-avatar" style="background-image: url('../public/images/<?php echo $row['profile_pic']; ?>');"></div>
+                                    <div class="member-avatar" style="background-image: url('../public/images/user-logo.jpg');"></div>
                                     <div>
                                         <strong><?php echo $row['first_name'] . ' ' . $row['last_name']; ?></strong>
                                         <div style="font-size: 0.8rem; color: #666;">Member ID: <?php echo $row['id']; ?></div>

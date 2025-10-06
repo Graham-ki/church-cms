@@ -221,11 +221,11 @@ include_once 'config/db.php';
                 <li><a href="logout" class="login-btn">Logout</a></li>
                 ';
             } elseif (isset($_SESSION['clergy']) && $_SESSION['clergy'] === true) {
-                echo '<li><a href="clergy-dashboard" class="dashboard-btn">My Dashboard</a></li>
+                echo '
                 <li><a href="logout" class="login-btn">Logout</a></li>
                 ';
             } elseif (isset($_SESSION['member']) && $_SESSION['member'] === true) {
-                echo '<li><a href="member-dashboard" class="dashboard-btn">My Dashboard</a></li>
+                echo '
                 <li><a href="logout" class="login-btn">Logout</a></li>
                 ';
             } else {

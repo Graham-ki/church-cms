@@ -171,10 +171,10 @@ mysqli_close($conn);
                 echo '<li><a href="dashboard.php" class="dashboard-btn">My Dashboard</a></li>
                 <li><a href="logout.php" class="login-btn">Logout</a></li>';
             } elseif (isset($_SESSION['clergy']) && $_SESSION['clergy'] === true) {
-                echo '<li><a href="clergy-dashboard.php" class="dashboard-btn">My Dashboard</a></li>
+                echo '
                 <li><a href="logout.php" class="login-btn">Logout</a></li>';
             } elseif (isset($_SESSION['member']) && $_SESSION['member'] === true) {
-                echo '<li><a href="member-dashboard.php" class="dashboard-btn">My Dashboard</a></li>
+                echo '
                 <li><a href="logout.php" class="login-btn">Logout</a></li>';
             } else {
                 echo '<li><a href="login.php" class="login-btn">Login</a></li>';

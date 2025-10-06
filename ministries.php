@@ -189,11 +189,11 @@ include_once 'config/db.php';
                 <li><a href="logout" class="login-btn">Logout</a></li>
                 ';
             } elseif (isset($_SESSION['clergy']) && $_SESSION['clergy'] === true) {
-                echo '<li><a href="clergy-dashboard" class="dashboard-btn">My Dashboard</a></li>
+                echo '
                 <li><a href="logout" class="login-btn">Logout</a></li>
                 ';
             } elseif (isset($_SESSION['member']) && $_SESSION['member'] === true) {
-                echo '<li><a href="member-dashboard" class="dashboard-btn">My Dashboard</a></li>
+                echo '
                 <li><a href="logout" class="login-btn">Logout</a></li>
                 ';
             } else {
@@ -228,8 +228,8 @@ include_once 'config/db.php';
                  if(isset($_GET['id'])){
                     $ministryId = $_GET['id'];
                     if(isset($_SESSION['member']) && $_SESSION['member'] === true){
-                        $memberId = $_SESSION['member_id'];
-                        $sql = "INSERT INTO participants (activity_id, participant_id, join_date) VALUES ($ministryId, $memberId, NOW())";
+                        $memberId = $_SESSION['user_id'];
+                        $sql = "INSERT INTO participants (activity_id, participant_id, join_date) VALUES ('$ministryId', '$memberId', NOW())";
                         $result = mysqli_query($conn, $sql);
                     }else{
                         echo "<script>alert('You need to be logged in as a member to join a ministry.'); window.location.href = 'login';</script>";

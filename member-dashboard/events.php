@@ -1,3 +1,204 @@
+<?php
+// Start session and include necessary files
+session_start();    
+include_once '../config/db.php';
+
+// Function to get all events with attendance count
+function getEventsWithAttendance() {
+    global $conn;
+    
+    $sql = "SELECT e.*, COUNT(a.id) as attendance_count 
+            FROM events e 
+            LEFT JOIN attendance a ON e.id = a.event_id 
+            GROUP BY e.id 
+            ORDER BY e.start_date ASC";
+    
+    $result = $conn->query($sql);
+    $events = [];
+    
+    if ($result && $result->num_rows > 0) {
+        while($row = $result->fetch_assoc()) {
+            $events[] = $row;
+        }
+    }
+    
+    return $events;
+}
+
+// Function to get a single event by ID
+function getEventById($id) {
+    global $conn;
+    
+    $sql = "SELECT e.*, COUNT(a.id) as attendance_count 
+            FROM events e 
+            LEFT JOIN attendance a ON e.id = a.event_id 
+            WHERE e.id = ?
+            GROUP BY e.id";
+    
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("i", $id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    
+    if ($result && $result->num_rows > 0) {
+        return $result->fetch_assoc();
+    }
+    
+    return null;
+}
+
+// Function to get events for a specific month
+function getEventsByMonth($year, $month) {
+    global $conn;
+    
+    $startDate = date('Y-m-01', strtotime("$year-$month-01"));
+    $endDate = date('Y-m-t', strtotime("$year-$month-01"));
+    
+    $sql = "SELECT e.*, COUNT(a.id) as attendance_count 
+            FROM events e 
+            LEFT JOIN attendance a ON e.id = a.event_id 
+            WHERE e.start_date BETWEEN ? AND ?
+            GROUP BY e.id 
+            ORDER BY e.start_date ASC";
+    
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("ss", $startDate, $endDate);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    
+    $events = [];
+    
+    if ($result && $result->num_rows > 0) {
+        while($row = $result->fetch_assoc()) {
+            $events[] = $row;
+        }
+    }
+    
+    return $events;
+}
+
+// Function to generate calendar HTML
+function generateCalendar($year, $month, $events) {
+    // First day of the month
+    $firstDay = mktime(0, 0, 0, $month, 1, $year);
+    // Number of days in the month
+    $daysInMonth = date('t', $firstDay);
+    // Day of the week for the first day (0=Sunday, 6=Saturday)
+    $firstDayOfWeek = date('w', $firstDay);
+    
+    // Previous and next month for navigation
+    $prevMonth = $month - 1;
+    $prevYear = $year;
+    if ($prevMonth < 1) {
+        $prevMonth = 12;
+        $prevYear = $year - 1;
+    }
+    
+    $nextMonth = $month + 1;
+    $nextYear = $year;
+    if ($nextMonth > 12) {
+        $nextMonth = 1;
+        $nextYear = $year + 1;
+    }
+    
+    // Month names
+    $monthNames = [
+        '', 'January', 'February', 'March', 'April', 'May', 'June', 
+        'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+    
+    // Start building calendar HTML
+    $calendarHTML = '
+    <div class="calendar-header">
+        <div class="calendar-nav">
+            <a href="?month='.$prevMonth.'&year='.$prevYear.'" class="btn-icon" id="prev-month"><i class="fas fa-chevron-left"></i></a>
+            <h2 class="calendar-title">'.$monthNames[$month].' '.$year.'</h2>
+            <a href="?month='.$nextMonth.'&year='.$nextYear.'" class="btn-icon" id="next-month"><i class="fas fa-chevron-right"></i></a>
+            <a href="?month='.date('n').'&year='.date('Y').'" class="btn btn-sm" id="today-btn">Today</a>
+        </div>
+        <button class="btn btn-sm btn-accent" id="add-event-btn"><i class="fas fa-plus"></i> Add Event</button>
+    </div>
+    
+    <div class="calendar-grid">
+        <div class="calendar-day-header">Sun</div>
+        <div class="calendar-day-header">Mon</div>
+        <div class="calendar-day-header">Tue</div>
+        <div class="calendar-day-header">Wed</div>
+        <div class="calendar-day-header">Thu</div>
+        <div class="calendar-day-header">Fri</div>
+        <div class="calendar-day-header">Sat</div>';
+    
+    // Fill in empty days before the first day of the month
+    for ($i = 0; $i < $firstDayOfWeek; $i++) {
+        $calendarHTML .= '<div class="calendar-day empty"></div>';
+    }
+    
+    // Current day for highlighting
+    $currentDay = date('j');
+    $currentMonthNow = date('n');
+    $currentYearNow = date('Y');
+    
+    // Fill in the days of the month
+    for ($day = 1; $day <= $daysInMonth; $day++) {
+        $isToday = ($day == $currentDay && $month == $currentMonthNow && $year == $currentYearNow);
+        $dayClass = $isToday ? 'calendar-day today' : 'calendar-day';
+        
+        $calendarHTML .= '<div class="'.$dayClass.'">';
+        $calendarHTML .= '<div class="calendar-day-number">'.$day.'</div>';
+        
+        // Add events for this day
+        $dayEvents = array_filter($events, function($event) use ($year, $month, $day) {
+            $eventDate = date('Y-m-d', strtotime($event['start_date']));
+            return $eventDate == sprintf('%04d-%02d-%02d', $year, $month, $day);
+        });
+        
+        foreach ($dayEvents as $event) {
+            // Determine color based on event category
+            $colorClass = 'var(--primary-color)';
+            if (!empty($event['event_category'])) {
+                $categoryColors = [
+                    'Worship' => 'var(--primary-color)',
+                    'Bible Study' => 'var(--accent-color)',
+                    'Youth' => '#4CAF50',
+                    'Community' => '#FF9800',
+                    'Special Events' => '#9C27B0',
+                    'Other' => '#607D8B'
+                ];
+                
+                $colorClass = $categoryColors[$event['event_category']] ?? 'var(--primary-color)';
+            }
+            
+            $calendarHTML .= '<div class="calendar-event" data-event-id="'.$event['id'].'" style="background: '.$colorClass.';">'.$event['title'].'</div>';
+        }
+        
+        $calendarHTML .= '</div>';
+    }
+    
+    $calendarHTML .= '</div>';
+    
+    return $calendarHTML;
+}
+
+// Get all events
+$allEvents = getEventsWithAttendance();
+
+// Set current month and year for calendar
+$currentMonth = isset($_GET['month']) ? (int)$_GET['month'] : date('n');
+$currentYear = isset($_GET['year']) ? (int)$_GET['year'] : date('Y');
+
+// Get events for current month
+$monthEvents = getEventsByMonth($currentYear, $currentMonth);
+
+// Handle event deletion
+if (isset($_GET['delete_id'])) {
+    $deleteId = $_GET['delete_id'];
+    // Add your delete logic here
+    // For example: $sql = "DELETE FROM events WHERE id = $deleteId";
+    // Then redirect back to avoid resubmission
+    header("Location: events.php?deleted=true");
+    exit();
+}
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -106,7 +307,6 @@
             padding: 3px 5px;
             margin-top: 3px;
             border-radius: 3px;
-            background: var(--primary-color);
             color: white;
             white-space: nowrap;
             overflow: hidden;
@@ -141,7 +341,6 @@
             width: 60px;
             height: 60px;
             border-radius: 8px;
-            background: var(--primary-color);
             color: white;
             font-weight: bold;
             flex-shrink: 0;
@@ -238,6 +437,49 @@
             cursor: pointer;
         }
         
+        /* Event detail modal */
+        .event-detail-modal .modal-content {
+            max-width: 500px;
+        }
+        
+        .event-detail-item {
+            display: flex;
+            margin-bottom: 10px;
+        }
+        
+        .event-detail-label {
+            font-weight: bold;
+            width: 120px;
+            flex-shrink: 0;
+        }
+        
+        .event-detail-value {
+            flex: 1;
+        }
+        
+        .event-status {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+        
+        .status-upcoming {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+        
+        .status-ongoing {
+            background: #e8f5e9;
+            color: #388e3c;
+        }
+        
+        .status-completed {
+            background: #f5f5f5;
+            color: #616161;
+        }
+        
         /* Show list view when active */
         .list-view.active ~ .events-list {
             display: flex;
@@ -246,46 +488,32 @@
         .list-view.active ~ .calendar-view {
             display: none;
         }
+        
+        /* Delete confirmation modal */
+        .delete-confirm-modal .modal-content {
+            max-width: 400px;
+        }
+        
+        .delete-message {
+            margin-bottom: 20px;
+        }
+        
+        .delete-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
     </style>
 </head>
 <body>
     <!-- Header -->
-    <header class="header">
-        <div class="logo">
-            <img src="../public/images/logo.png" alt="Church Logo">
-            <div class="logo-text">
-                <h1>St. Stephen C.O.U</h1>
-                <p>Church Management System</p>
-            </div>
-        </div>
-        
-        <div class="header-search">
-            <input type="text" placeholder="Search events...">
-            <button type="submit"><i class="fas fa-search"></i></button>
-        </div>
-        
-        <div class="user-actions">
-            <div class="notification-icon">
-                <i class="fas fa-bell"></i>
-                <span class="notification-badge">3</span>
-            </div>
-            
-            <div class="user-profile">
-                <div class="user-avatar" style="background-image: url('../public/images/user7.png');"></div>
-                <span class="user-name">Admin User</span>
-                <div class="user-dropdown">
-                    <a href="#"><i class="fas fa-user"></i> My Profile</a>
-                    <a href="#"><i class="fas fa-cog"></i> Settings</a>
-                    <a href="#" id="logout-btn"><i class="fas fa-sign-out-alt"></i> Logout</a>
-                </div>
-            </div>
-        </div>
-    </header>
-    
+    <?php
+    include_once 'header.php';
+    ?>
     <!-- Main Content -->
     <div class="main-container">
         <!-- Sidebar Navigation -->
-        <aside class="sidebar">
+       <aside class="sidebar">
             <nav class="sidebar-nav">
                 <div class="nav-item">
                     <a href="index" class="nav-link">
@@ -317,6 +545,12 @@
                         <span class="nav-text">Events</span>
                     </a>
                 </div>
+                    <div class="nav-item">
+                    <a href="ministries" class="nav-link">
+                        <i class="fas fa-building"></i>
+                        <span class="nav-text">Ministries</span>
+                    </a>
+                </div>
                 <div class="nav-item">
                     <a href="contributions" class="nav-link">
                         <i class="fas fa-donate"></i>
@@ -343,7 +577,6 @@
                 </div>
             </nav>
         </aside>
-        
         <!-- Page Content -->
         <main class="main-content">
             <div class="page-header">
@@ -371,104 +604,63 @@
                 
                 <!-- Calendar View -->
                 <div class="calendar-view" id="calendar-view">
-                    <div class="calendar-header">
-                        <div class="calendar-nav">
-                            <button class="btn-icon" id="prev-month"><i class="fas fa-chevron-left"></i></button>
-                            <h2 class="calendar-title">June 2025</h2>
-                            <button class="btn-icon" id="next-month"><i class="fas fa-chevron-right"></i></button>
-                            <button class="btn btn-sm" id="today-btn">Today</button>
-                        </div>
-                        <button class="btn btn-sm btn-accent" id="add-event-btn"><i class="fas fa-plus"></i> Add Event</button>
-                    </div>
-                    
-                    <div class="calendar-grid">
-                        <div class="calendar-day-header">Sun</div>
-                        <div class="calendar-day-header">Mon</div>
-                        <div class="calendar-day-header">Tue</div>
-                        <div class="calendar-day-header">Wed</div>
-                        <div class="calendar-day-header">Thu</div>
-                        <div class="calendar-day-header">Fri</div>
-                        <div class="calendar-day-header">Sat</div>
-                        
-                        <!-- Calendar days will be generated by JavaScript -->
-                        <div class="calendar-day empty"></div>
-                        <div class="calendar-day empty"></div>
-                        <div class="calendar-day">
-                            <div class="calendar-day-number">1</div>
-                        </div>
-                        <div class="calendar-day">
-                            <div class="calendar-day-number">2</div>
-                        </div>
-                        <div class="calendar-day">
-                            <div class="calendar-day-number">3</div>
-                        </div>
-                        <div class="calendar-day">
-                            <div class="calendar-day-number">4</div>
-                        </div>
-                        <div class="calendar-day">
-                            <div class="calendar-day-number">5</div>
-                        </div>
-                        
-                        <!-- More days would be filled in here -->
-                        <div class="calendar-day today">
-                            <div class="calendar-day-number">15</div>
-                            <div class="calendar-event">Annual Conference</div>
-                            <div class="calendar-event">Men's Breakfast</div>
-                        </div>
-                        
-                        <!-- Sample events for demonstration -->
-                        <div class="calendar-day">
-                            <div class="calendar-day-number">22</div>
-                            <div class="calendar-event">Youth Camp</div>
-                        </div>
-                    </div>
+                    <?php echo generateCalendar($currentYear, $currentMonth, $monthEvents); ?>
                 </div>
                 
                 <!-- List View -->
                 <div class="events-list" id="events-list">
-                    <div class="event-card">
-                        <div class="event-date" style="background: var(--primary-color);">
-                            <span>15</span>
-                            <span>JUN</span>
-                        </div>
-                        <div class="event-details">
-                            <h3>Annual Church Conference</h3>
-                            <div class="event-meta">
-                                <span><i class="fas fa-clock"></i> 9:00 AM - 4:00 PM</span>
-                                <span><i class="fas fa-map-marker-alt"></i> Main Hall</span>
-                                <span><i class="fas fa-users"></i> 120 attending</span>
-                            </div>
-                            <p>Our yearly gathering for spiritual renewal and fellowship with guest speaker Pastor Michael from Kampala.</p>
-                            <div class="event-actions">
-                                <button title="Edit"><i class="fas fa-edit"></i></button>
-                                <button title="Delete"><i class="fas fa-trash"></i></button>
-                                <button title="Share"><i class="fas fa-share"></i></button>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="event-card">
-                        <div class="event-date" style="background: var(--accent-color);">
-                            <span>22</span>
-                            <span>JUN</span>
-                        </div>
-                        <div class="event-details">
-                            <h3>Youth Camp</h3>
-                            <div class="event-meta">
-                                <span><i class="fas fa-clock"></i> All day</span>
-                                <span><i class="fas fa-map-marker-alt"></i> Lake View Resort</span>
-                                <span><i class="fas fa-users"></i> 45 registered</span>
-                            </div>
-                            <p>3-day retreat for our young members with activities, Bible study, and fellowship.</p>
-                            <div class="event-actions">
-                                <button title="Edit"><i class="fas fa-edit"></i></button>
-                                <button title="Delete"><i class="fas fa-trash"></i></button>
-                                <button title="Share"><i class="fas fa-share"></i></button>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- More events would be listed here -->
+                    <?php
+                    if (count($allEvents) > 0) {
+                        foreach ($allEvents as $event) {
+                            $eventDate = strtotime($event['start_date']);
+                            $day = date('d', $eventDate);
+                            $month = date('M', $eventDate);
+                            
+                            // Determine color based on event category or use default
+                            $colorClass = 'var(--primary-color)';
+                            if (!empty($event['event_category'])) {
+                                $categoryColors = [
+                                    'Worship' => 'var(--primary-color)',
+                                    'Bible Study' => 'var(--accent-color)',
+                                    'Youth' => '#4CAF50',
+                                    'Community' => '#FF9800',
+                                    'Special Events' => '#9C27B0',
+                                    'Other' => '#607D8B'
+                                ];
+                                
+                                $colorClass = $categoryColors[$event['event_category']] ?? 'var(--primary-color)';
+                            }
+                            
+                            // Format time
+                            $startTime = !empty($event['start_time']) ? date('g:i A', strtotime($event['start_time'])) : 'All day';
+                            $endTime = !empty($event['end_time']) ? ' - ' . date('g:i A', strtotime($event['end_time'])) : '';
+                            
+                            echo '
+                            <div class="event-card">
+                                <div class="event-date" style="background: '.$colorClass.';">
+                                    <span>'.$day.'</span>
+                                    <span>'.$month.'</span>
+                                </div>
+                                <div class="event-details">
+                                    <h3>'.htmlspecialchars($event['title']).'</h3>
+                                    <div class="event-meta">
+                                        <span><i class="fas fa-clock"></i> '.$startTime.$endTime.'</span>
+                                        <span><i class="fas fa-map-marker-alt"></i> '.htmlspecialchars($event['location'] ?? 'TBA').'</span>
+                                        <span><i class="fas fa-users"></i> '.$event['attendance_count'].' attending</span>
+                                    </div>
+                                    <p>'.htmlspecialchars($event['description']).'</p>
+                                    <div class="event-actions">
+                                        <button class="edit-event" data-event-id="'.$event['id'].'" title="Edit"><i class="fas fa-edit"></i></button>
+                                        <button class="delete-event" data-event-id="'.$event['id'].'" data-event-title="'.htmlspecialchars($event['title']).'" title="Delete"><i class="fas fa-trash"></i></button>
+                                        <button title="Share"><i class="fas fa-share"></i></button>
+                                    </div>
+                                </div>
+                            </div>';
+                        }
+                    } else {
+                        echo '<p>No events found.</p>';
+                    }
+                    ?>
                 </div>
             </div>
         </main>
@@ -488,78 +680,145 @@
         </div>
     </footer>
     
-    <!-- Event Modal -->
+    <!-- Add/Edit Event Modal -->
     <div class="modal" id="event-modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2>New Event</h2>
+                <h2 id="event-modal-title">New Event</h2>
                 <button class="close-modal">&times;</button>
             </div>
             <div class="modal-body">
-                <form id="event-form">
+                <form method="POST" action="../includes/functions.php" enctype="multipart/form-data" id="event-form">
+                    <input type="hidden" name="event_id" id="event_id" value="">
                     <div class="form-group">
                         <label>Event Title</label>
-                        <input type="text" class="form-control" placeholder="Enter event title" required>
+                        <input type="text" class="form-control" name="title" id="event_title" placeholder="Enter event title" required>
                     </div>
                     
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
                         <div class="form-group">
                             <label>Start Date</label>
-                            <input type="date" class="form-control" required>
+                            <input name="start_date" id="event_start_date" type="date" class="form-control" required>
                         </div>
                         <div class="form-group">
                             <label>Start Time</label>
-                            <input type="time" class="form-control">
+                            <input name="start_time" id="event_start_time" type="time" class="form-control" required>
                         </div>
                     </div>
                     
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
                         <div class="form-group">
                             <label>End Date</label>
-                            <input type="date" class="form-control">
+                            <input name="end_date" id="event_end_date" type="date" class="form-control">
                         </div>
                         <div class="form-group">
                             <label>End Time</label>
-                            <input type="time" class="form-control">
+                            <input name="end_time" id="event_end_time" type="time" class="form-control">
                         </div>
                     </div>
                     
                     <div class="form-group">
                         <label>Location</label>
-                        <input type="text" class="form-control" placeholder="Enter location">
+                        <input name="location" id="event_location" type="text" class="form-control" placeholder="Enter location">
                     </div>
                     
                     <div class="form-group">
                         <label>Description</label>
-                        <textarea class="form-control" rows="4" placeholder="Enter event description"></textarea>
+                        <textarea name="description" id="event_description" class="form-control" rows="4" placeholder="Enter event description"></textarea>
                     </div>
-                    
+                    <div class="form-group">
+                        <label>Relevant Image</label>
+                        <input type="file" class="form-control" name="event_image">
+                    </div>
                     <div class="form-group">
                         <label>Event Category</label>
-                        <select class="form-control">
-                            <option>Service</option>
-                            <option>Meeting</option>
-                            <option>Social</option>
-                            <option>Conference</option>
-                            <option>Other</option>
+                        <select name="event_category" id="event_category" class="form-control">
+                            <option value="Worship">Worship</option>
+                            <option value="Bible Study">Bible Study</option>
+                            <option value="Youth">Youth</option>
+                            <option value="Community">Community</option>
+                            <option value="Special Events">Special Events</option>
+                            <option value="Other">Other</option>
                         </select>
                     </div>
                     
                     <div class="form-group">
-                        <label>Target Audience</label>
-                        <select class="form-control" multiple>
-                            <option>All Members</option>
-                            <option>Men's Fellowship</option>
-                            <option>Women's Ministry</option>
-                            <option>Youth</option>
-                            <option>Church Leaders</option>
+                        <label>Target Audience (press down control key to select multiple)</label>
+                        <select name="target_audience[]" id="event_target_audience" class="form-control" multiple>
+                            <option value="All Members">All Members</option>
+                            <option value="Men">Men</option>
+                            <option value="Women">Women</option>
+                            <option value="Youth">Youth</option>
+                            <option value="Elders">Elders</option>
+                            <option value="Leaders">Leaders</option>
+                            <option value="Children">Children</option>
                         </select>
                     </div>
-                </form>
+                
             </div>
             <div class="modal-footer">
-                <button class="btn" id="cancel-event">Cancel</button>
-                <button class="btn btn-accent" id="save-event">Save Event</button>
+                <button type="button" class="btn" id="cancel-event">Cancel</button>
+                <button type="submit" name="save-event" class="btn btn-accent">Save Event</button>
+            </div>
+        </form>
+        </div>
+    </div>
+    
+    <!-- Event Detail Modal -->
+    <div class="modal event-detail-modal" id="event-detail-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="event-detail-title">Event Title</h2>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="event-detail-item">
+                    <div class="event-detail-label">Date:</div>
+                    <div class="event-detail-value" id="event-detail-date"></div>
+                </div>
+                <div class="event-detail-item">
+                    <div class="event-detail-label">Time:</div>
+                    <div class="event-detail-value" id="event-detail-time"></div>
+                </div>
+                <div class="event-detail-item">
+                    <div class="event-detail-label">Location:</div>
+                    <div class="event-detail-value" id="event-detail-location"></div>
+                </div>
+                <div class="event-detail-item">
+                    <div class="event-detail-label">Attending:</div>
+                    <div class="event-detail-value" id="event-detail-attendance"></div>
+                </div>
+                <div class="event-detail-item">
+                    <div class="event-detail-label">Status:</div>
+                    <div class="event-detail-value" id="event-detail-status"></div>
+                </div>
+                <div class="event-detail-item">
+                    <div class="event-detail-value" id="event-detail-description"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-accent" id="event-detail-edit">Edit</button>
+                <button class="btn" id="event-detail-close">Close</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Delete Confirmation Modal -->
+    <div class="modal delete-confirm-modal" id="delete-confirm-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Confirm Delete</h2>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="delete-message">
+                    <p>Are you sure you want to delete the event: <strong id="delete-event-title"></strong>?</p>
+                    <p>This action cannot be undone.</p>
+                </div>
+                <div class="delete-actions">
+                    <button class="btn" id="delete-cancel">Cancel</button>
+                    <a href="#" class="btn btn-accent" id="delete-confirm">Delete</a>
+                </div>
             </div>
         </div>
     </div>
@@ -586,80 +845,222 @@
             });
             
             // Modal functionality
-            const modal = document.getElementById('event-modal');
+            const eventModal = document.getElementById('event-modal');
+            const eventDetailModal = document.getElementById('event-detail-modal');
+            const deleteModal = document.getElementById('delete-confirm-modal');
             const newEventBtn = document.getElementById('new-event-btn');
             const addEventBtn = document.getElementById('add-event-btn');
-            const closeModal = document.querySelector('.close-modal');
+            const closeModalButtons = document.querySelectorAll('.close-modal');
             const cancelEvent = document.getElementById('cancel-event');
+            const eventDetailClose = document.getElementById('event-detail-close');
+            const deleteCancel = document.getElementById('delete-cancel');
             
-            function openModal() {
+            function openModal(modal) {
                 modal.style.display = 'flex';
                 document.body.style.overflow = 'hidden';
             }
             
-            function closeModalFunc() {
+            function closeModalFunc(modal) {
                 modal.style.display = 'none';
                 document.body.style.overflow = 'auto';
             }
             
-            newEventBtn.addEventListener('click', openModal);
-            addEventBtn.addEventListener('click', openModal);
-            closeModal.addEventListener('click', closeModalFunc);
-            cancelEvent.addEventListener('click', closeModalFunc);
+            function closeAllModals() {
+                closeModalFunc(eventModal);
+                closeModalFunc(eventDetailModal);
+                closeModalFunc(deleteModal);
+            }
+            
+            // New event button
+            newEventBtn.addEventListener('click', function() {
+                document.getElementById('event-modal-title').textContent = 'New Event';
+                document.getElementById('event-form').reset();
+                document.getElementById('event_id').value = '';
+                openModal(eventModal);
+            });
+            
+            // Add event button in calendar header
+            addEventBtn.addEventListener('click', function() {
+                document.getElementById('event-modal-title').textContent = 'New Event';
+                document.getElementById('event-form').reset();
+                document.getElementById('event_id').value = '';
+                openModal(eventModal);
+            });
+            
+            // Close modal buttons
+            closeModalButtons.forEach(button => {
+                button.addEventListener('click', closeAllModals);
+            });
+            
+            cancelEvent.addEventListener('click', function() {
+                closeModalFunc(eventModal);
+            });
+            
+            eventDetailClose.addEventListener('click', function() {
+                closeModalFunc(eventDetailModal);
+            });
+            
+            deleteCancel.addEventListener('click', function() {
+                closeModalFunc(deleteModal);
+            });
             
             // Close modal when clicking outside
-            modal.addEventListener('click', function(e) {
-                if (e.target === modal) {
-                    closeModalFunc();
-                }
-            });
-            
-            // Calendar navigation
-            const prevMonthBtn = document.getElementById('prev-month');
-            const nextMonthBtn = document.getElementById('next-month');
-            const todayBtn = document.getElementById('today-btn');
-            const calendarTitle = document.querySelector('.calendar-title');
-            
-            // In a real app, you would implement full calendar functionality here
-            prevMonthBtn.addEventListener('click', function() {
-                // Update calendar to show previous month
-                console.log('Previous month');
-            });
-            
-            nextMonthBtn.addEventListener('click', function() {
-                // Update calendar to show next month
-                console.log('Next month');
-            });
-            
-            todayBtn.addEventListener('click', function() {
-                // Update calendar to show current month
-                console.log('Today');
-            });
-            
-            // Event click handlers
-            document.querySelectorAll('.calendar-event').forEach(event => {
-                event.addEventListener('click', function(e) {
-                    e.stopPropagation();
-                    // In a real app, you would show event details
-                    alert('Event details would be shown here');
-                });
-            });
-            
-            document.querySelectorAll('.calendar-day').forEach(day => {
-                day.addEventListener('click', function() {
-                    if (!this.classList.contains('empty')) {
-                        // In a real app, you might create a new event for this day
-                        openModal();
+            document.querySelectorAll('.modal').forEach(modal => {
+                modal.addEventListener('click', function(e) {
+                    if (e.target === modal) {
+                        closeModalFunc(modal);
                     }
                 });
             });
             
-            // Save event
-            document.getElementById('save-event').addEventListener('click', function() {
-                // In a real app, you would save the event data
-                closeModalFunc();
-                alert('Event saved successfully!');
+            // Event click handlers for calendar events
+            document.addEventListener('click', function(e) {
+                if (e.target.classList.contains('calendar-event')) {
+                    const eventId = e.target.dataset.eventId;
+                    fetchEventDetails(eventId);
+                }
             });
+            
+            // Edit event buttons
+            document.querySelectorAll('.edit-event').forEach(button => {
+                button.addEventListener('click', function() {
+                    const eventId = this.dataset.eventId;
+                    fetchEventForEdit(eventId);
+                });
+            });
+            
+            // Delete event buttons
+            document.querySelectorAll('.delete-event').forEach(button => {
+                button.addEventListener('click', function() {
+                    const eventId = this.dataset.eventId;
+                    const eventTitle = this.dataset.eventTitle;
+                    document.getElementById('delete-event-title').textContent = eventTitle;
+                    document.getElementById('delete-confirm').href = `?delete_id=${eventId}`;
+                    openModal(deleteModal);
+                });
+            });
+            
+            // Edit button in event detail modal
+            document.getElementById('event-detail-edit').addEventListener('click', function() {
+                const eventId = document.getElementById('event-detail-title').dataset.eventId;
+                fetchEventForEdit(eventId);
+            });
+            
+            // Function to fetch event details for display
+            function fetchEventDetails(eventId) {
+                // In a real app, you would fetch from the server
+                // For this example, we'll use the events data we already have
+                const events = <?php echo json_encode($allEvents); ?>;
+                const event = events.find(e => e.id == eventId);
+                
+                if (event) {
+                    document.getElementById('event-detail-title').textContent = event.title;
+                    document.getElementById('event-detail-title').dataset.eventId = event.id;
+                    
+                    // Format date
+                    const eventDate = new Date(event.start_date);
+                    const formattedDate = eventDate.toLocaleDateString('en-US', { 
+                        weekday: 'long', 
+                        year: 'numeric', 
+                        month: 'long', 
+                        day: 'numeric' 
+                    });
+                    document.getElementById('event-detail-date').textContent = formattedDate;
+                    
+                    // Format time
+                    let timeText = 'All day';
+                    if (event.start_time) {
+                        const startTime = formatTime(event.start_time);
+                        const endTime = event.end_time ? formatTime(event.end_time) : '';
+                        timeText = startTime + (endTime ? ' - ' + endTime : '');
+                    }
+                    document.getElementById('event-detail-time').textContent = timeText;
+                    
+                    // Location
+                    document.getElementById('event-detail-location').textContent = event.location || 'TBA';
+                    
+                    // Attendance
+                    document.getElementById('event-detail-attendance').textContent = event.attendance_count + ' attending';
+                    
+                    // Status
+                    const now = new Date();
+                    const startDateTime = new Date(event.start_date + ' ' + (event.start_time || '00:00:00'));
+                    const endDateTime = event.end_date ? new Date(event.end_date + ' ' + (event.end_time || '23:59:59')) : null;
+                    
+                    let status = '';
+                    if (now < startDateTime) {
+                        status = '<span class="event-status status-upcoming">Upcoming</span>';
+                    } else if (endDateTime && now > endDateTime) {
+                        status = '<span class="event-status status-completed">Completed</span>';
+                    } else {
+                        status = '<span class="event-status status-ongoing">Ongoing</span>';
+                    }
+                    document.getElementById('event-detail-status').innerHTML = status;
+                    
+                    // Description
+                    document.getElementById('event-detail-description').textContent = event.description || 'No description provided.';
+                    
+                    openModal(eventDetailModal);
+                }
+            }
+            
+            // Function to fetch event for editing
+            function fetchEventForEdit(eventId) {
+                // In a real app, you would fetch from the server
+                // For this example, we'll use the events data we already have
+                const events = <?php echo json_encode($allEvents); ?>;
+                const event = events.find(e => e.id == eventId);
+                
+                if (event) {
+                    document.getElementById('event-modal-title').textContent = 'Edit Event';
+                    document.getElementById('event_id').value = event.id;
+                    document.getElementById('event_title').value = event.title;
+                    document.getElementById('event_start_date').value = event.start_date;
+                    document.getElementById('event_start_time').value = event.start_time || '';
+                    document.getElementById('event_end_date').value = event.end_date || '';
+                    document.getElementById('event_end_time').value = event.end_time || '';
+                    document.getElementById('event_location').value = event.location || '';
+                    document.getElementById('event_description').value = event.description || '';
+                    document.getElementById('event_category').value = event.event_category || 'Worship';
+                    
+                    // Set target audience (this would need more complex handling in a real app)
+                    if (event.target_audience) {
+                        // This is a simplified version - you'd need to parse the stored value
+                        const audienceSelect = document.getElementById('event_target_audience');
+                        Array.from(audienceSelect.options).forEach(option => {
+                            option.selected = event.target_audience.includes(option.value);
+                        });
+                    }
+                    
+                    closeModalFunc(eventDetailModal);
+                    openModal(eventModal);
+                }
+            }
+            
+            // Helper function to format time
+            function formatTime(timeString) {
+                if (!timeString) return '';
+                
+                const timeParts = timeString.split(':');
+                let hours = parseInt(timeParts[0]);
+                const minutes = timeParts[1];
+                const ampm = hours >= 12 ? 'PM' : 'AM';
+                
+                hours = hours % 12;
+                hours = hours ? hours : 12; // the hour '0' should be '12'
+                
+                return hours + ':' + minutes + ' ' + ampm;
+            }
+            
+            // Set today's date as default for new event form
+            const today = new Date();
+            const formattedDate = today.toISOString().split('T')[0];
+            document.querySelector('input[name="start_date"]').value = formattedDate;
+            
+            // Set default time (current time + 1 hour)
+            const nextHour = new Date(today.getTime() + 60 * 60 * 1000);
+            const formattedTime = nextHour.toTimeString().substr(0, 5);
+            document.querySelector('input[name="start_time"]').value = formattedTime;
         });
     </script>
 </body>

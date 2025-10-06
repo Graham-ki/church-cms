@@ -1,5 +1,6 @@
 <?php
 session_start();
+include_once 'config/db.php';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -15,26 +16,26 @@ session_start();
     <nav class="glass-nav">
         <div class="logo">
             <img src="public/images/logo.png" alt="Church Logo">
-            <span>St. Stephen C.O.U</span>
+            <span>St. Stephen </span>
         </div>
         <ul class="nav-links">
-            <li><a href="index" class="active">Home</a></li>
+            <li><a href="home" class="active">Home</a></li>
             <li><a href="about-us">About</a></li>
             <li><a href="events">Events</a></li>
             <li><a href="ministries">Ministries</a></li>
             <li><a href="forum">Forum</a></li>
             <li><a href="contact">Contact</a></li>
-            <?php
+              <?php
             if (isset($_SESSION['admin']) && $_SESSION['admin'] === true) {
                 echo '<li><a href="dashboard" class="dashboard-btn">My Dashboard</a></li>
                 <li><a href="logout" class="login-btn">Logout</a></li>
                 ';
             } elseif (isset($_SESSION['clergy']) && $_SESSION['clergy'] === true) {
-                echo '<li><a href="clergy-dashboard" class="dashboard-btn">My Dashboard</a></li>
+                echo '
                 <li><a href="logout" class="login-btn">Logout</a></li>
                 ';
             } elseif (isset($_SESSION['member']) && $_SESSION['member'] === true) {
-                echo '<li><a href="member-dashboard" class="dashboard-btn">My Dashboard</a></li>
+                echo '
                 <li><a href="logout" class="login-btn">Logout</a></li>
                 ';
             } else {
@@ -56,21 +57,21 @@ session_start();
                 <div class="slide-content">
                     <h1>Welcome to St. Stephen C.O.U</h1>
                     <p>Join us in worship and fellowship every Sunday at 9:00 AM</p>
-                    <a href="#" class="btn">Learn More</a>
+                    <a href="service-schedule" class="btn">Learn More</a>
                 </div>
             </div>
             <div class="slide">
                 <div class="slide-content">
                     <h1>Growing Together in Faith</h1>
                     <p>Discover our Bible study groups and spiritual growth programs</p>
-                    <a href="#" class="btn">Join a Group</a>
+                    <a href="forum" class="btn">Join a Group</a>
                 </div>
             </div>
             <div class="slide">
                 <div class="slide-content">
                     <h1>Serving Our Community</h1>
                     <p>Find out how you can participate in our outreach programs</p>
-                    <a href="#" class="btn">Volunteer</a>
+                    <a href="events" class="btn">Volunteer</a>
                 </div>
             </div>
             <div class="slide-controls">
@@ -89,7 +90,31 @@ session_start();
     <section class="events-section">
         <h2 class="section-title">Upcoming Events</h2>
         <div class="events-container">
-            <div class="event-card glass-card">
+            <?php
+            $sql = "SELECT * FROM events ORDER BY start_date ASC";
+            $result = $conn->query($sql);
+            if ($result->num_rows > 0) {
+                while ($event = $result->fetch_assoc()) {
+                    echo '<div class="event-card glass-card">';
+                    echo '<div class="event-image">';
+                    echo '<img src="uploads/events/' . $event['image'] . '" alt="' . $event['title'] . '">';
+                    echo '<div class="event-date">';
+                    echo '<span class="day">' . date('d', strtotime($event['start_date'])) . '</span>';
+                    echo '<span class="month">' . date('M', strtotime($event['start_date'])) . '</span>';
+                    echo '</div></div>';
+                    echo '<div class="event-info">';
+                    echo '<h3>' . $event['title'] . '</h3>';
+                    echo '<p class="event-location"><i class="fas fa-map-marker-alt"></i> ' . $event['location'] . '</p>';
+                    echo '<p class="event-time"><i class="fas fa-clock"></i> ' . date('g:i A', strtotime($event['start_time'])) . ' - ' . date('g:i A', strtotime($event['end_time'])) . '</p>';
+                    echo '<p class="event-target-audience"><i class="fas fa-users"></i> ' . $event['target_audience'] . '</p>';
+                    echo '<p class="event-desc">' . $event['description'] . '</p>';
+                    echo '</div></div>';
+                }
+            } else {
+                echo '<p>No upcoming events found.</p>';
+            }
+            ?>
+            <!--<div class="event-card glass-card">
                 <div class="event-image">
                     <img src="public/images/event1.jpg" alt="Bible Study">
                     <div class="event-date">
@@ -101,41 +126,8 @@ session_start();
                     <h3>Youth Bible Study</h3>
                     <p class="event-location"><i class="fas fa-map-marker-alt"></i> Church Hall</p>
                     <p class="event-desc">Join our weekly youth Bible study session for spiritual growth and fellowship.</p>
-                    <a href="#" class="event-link">View Details <i class="fas fa-arrow-right"></i></a>
                 </div>
-            </div>
-            
-            <div class="event-card glass-card">
-                <div class="event-image">
-                    <img src="public/images/event2.jpg" alt="Community Outreach">
-                    <div class="event-date">
-                        <span class="day">22</span>
-                        <span class="month">JUL</span>
-                    </div>
-                </div>
-                <div class="event-info">
-                    <h3>Community Outreach</h3>
-                    <p class="event-location"><i class="fas fa-map-marker-alt"></i> Kumi Town</p>
-                    <p class="event-desc">Help us serve the less fortunate in our community through this outreach program.</p>
-                    <a href="#" class="event-link">View Details <i class="fas fa-arrow-right"></i></a>
-                </div>
-            </div>
-            
-            <div class="event-card glass-card">
-                <div class="event-image">
-                    <img src="public/images/event3.jpg" alt="Choir Practice">
-                    <div class="event-date">
-                        <span class="day">29</span>
-                        <span class="month">JUL</span>
-                    </div>
-                </div>
-                <div class="event-info">
-                    <h3>Choir Practice</h3>
-                    <p class="event-location"><i class="fas fa-map-marker-alt"></i> Choir Room</p>
-                    <p class="event-desc">Weekly choir practice for all members. New voices are always welcome!</p>
-                    <a href="#" class="event-link">View Details <i class="fas fa-arrow-right"></i></a>
-                </div>
-            </div>
+            </div>-->
         </div>
     </section>
 
@@ -144,41 +136,32 @@ session_start();
         <h2 class="section-title">Recent Communications</h2>
         <div class="comms-carousel">
             <div class="comms-container">
-                <div class="comm-card glass-card">
+                <?php
+                $sql = "SELECT * FROM communications ORDER BY sent_at DESC";
+                $result = $conn->query($sql);
+                if ($result->num_rows > 0) {
+                    while ($comm = $result->fetch_assoc()) {
+                        echo '<div class="comm-card glass-card">';
+                        echo '<div class="comm-header">';
+                        echo '<h3>' . $comm['title'] . '</h3>';
+                        echo '<span class="comm-date">' . date('F j, Y', strtotime($comm['sent_at'])) . '</span>';
+                        echo '</div>';
+                        echo '<p>' . $comm['message'] . '</p>';
+                        echo '<a href="index.php?comm_id=' . $comm['id'] . '" class="comm-link">Read More <i class="fas fa-arrow-right"></i></a>';
+                        echo '</div>';
+                    }
+                } else {
+                    echo '<p>No recent communications found.</p>';
+                }
+                ?>
+                <!--<div class="comm-card glass-card">
                     <div class="comm-header">
                         <h3>Sunday Service Update</h3>
                         <span class="comm-date">July 10, 2025</span>
                     </div>
                     <p>This Sunday's service will feature a special guest speaker from Kumi Diocese. All members are encouraged to attend.</p>
                     <a href="#" class="comm-link">Read More <i class="fas fa-arrow-right"></i></a>
-                </div>
-                
-                <div class="comm-card glass-card">
-                    <div class="comm-header">
-                        <h3>Building Fund Progress</h3>
-                        <span class="comm-date">July 3, 2025</span>
-                    </div>
-                    <p>We've reached 65% of our building fund goal! Thank you for your generous contributions.</p>
-                    <a href="#" class="comm-link">Read More <i class="fas fa-arrow-right"></i></a>
-                </div>
-                
-                <div class="comm-card glass-card">
-                    <div class="comm-header">
-                        <h3>Vacation Bible School</h3>
-                        <span class="comm-date">June 26, 2025</span>
-                    </div>
-                    <p>Registration is now open for our annual Vacation Bible School program for children ages 5-12.</p>
-                    <a href="#" class="comm-link">Read More <i class="fas fa-arrow-right"></i></a>
-                </div>
-                
-                <div class="comm-card glass-card">
-                    <div class="comm-header">
-                        <h3>Pastoral Letter</h3>
-                        <span class="comm-date">June 19, 2025</span>
-                    </div>
-                    <p>A special message from our pastor about spiritual growth during challenging times.</p>
-                    <a href="#" class="comm-link">Read More <i class="fas fa-arrow-right"></i></a>
-                </div>
+                </div>-->
             </div>
             <button class="carousel-prev"><i class="fas fa-chevron-left"></i></button>
             <button class="carousel-next"><i class="fas fa-chevron-right"></i></button>
@@ -194,7 +177,7 @@ session_start();
                 </div>
                 <h3>Support Our Ministry</h3>
                 <p>Your generous donations help us continue our mission and serve the community.</p>
-                <a href="#" class="btn">Donate Now</a>
+                <a href="donations" class="btn">Donate Now</a>
             </div>
             
             <div class="cta-card glass-card">
@@ -203,7 +186,7 @@ session_start();
                 </div>
                 <h3>Join Our Church</h3>
                 <p>Become a member of our growing church family and participate in our ministries.</p>
-                <a href="#" class="btn">Register Now</a>
+                <a href="register" class="btn">Register Now</a>
             </div>
         </div>
     </section>

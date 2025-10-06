@@ -671,10 +671,10 @@ function time_elapsed_string($datetime, $full = false) {
                 echo '<li><a href="dashboard.php" class="dashboard-btn">My Dashboard</a></li>
                 <li><a href="logout.php" class="login-btn">Logout</a></li>';
             } elseif (isset($_SESSION['clergy']) && $_SESSION['clergy'] === true) {
-                echo '<li><a href="clergy-dashboard.php" class="dashboard-btn">My Dashboard</a></li>
+                echo '
                 <li><a href="logout.php" class="login-btn">Logout</a></li>';
             } elseif (isset($_SESSION['member']) && $_SESSION['member'] === true) {
-                echo '<li><a href="member-dashboard.php" class="dashboard-btn">My Dashboard</a></li>
+                echo '
                 <li><a href="logout.php" class="login-btn">Logout</a></li>';
             } else {
                 echo '<li><a href="login.php" class="login-btn">Login</a></li>';
@@ -809,7 +809,7 @@ function time_elapsed_string($datetime, $full = false) {
                                 for($i = 0; $i < $display_count; $i++): 
                                 ?>
                                 <div class="participant-avatar" 
-                                     style="background-image: url('public/images/avatars/<?php echo $participants[$i]['avatar'] ?: 'default.png'; ?>');">
+                                     style="background-image: url('public/images/user-logo.jpg');">
                                 </div>
                                 <?php endfor; ?>
                                 <?php if(count($participants) > 3): ?>
@@ -825,7 +825,7 @@ function time_elapsed_string($datetime, $full = false) {
                         <?php foreach($messages as $message): ?>
                         <div class="message" id="message-<?php echo $message['id']; ?>">
                             <div class="message-avatar" 
-                                 style="background-image: url('public/images/avatars/<?php echo $message['avatar'] ?: 'default.png'; ?>');">
+                                 style="background-image: url('public/images/user-logo.jpg');">
                             </div>
                             <div class="message-content">
                                 <div class="message-header">

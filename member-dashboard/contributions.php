@@ -321,6 +321,12 @@
                     </a>
                 </div>
                 <div class="nav-item">
+                    <a href="ministries" class="nav-link">
+                        <i class="fas fa-calendar-alt"></i>
+                        <span class="nav-text">Ministries</span>
+                    </a>
+                </div>
+                <div class="nav-item">
                     <a href="contributions" class="nav-link active">
                         <i class="fas fa-donate"></i>
                         <span class="nav-text">Contributions</span>

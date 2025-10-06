@@ -1,3 +1,6 @@
+<?php
+include '../config/db.php';
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -254,37 +257,7 @@
 </head>
 <body>
     <!-- Header -->
-    <header class="header">
-        <div class="logo">
-            <img src="../public/images/logo.png" alt="Church Logo">
-            <div class="logo-text">
-                <h1>St. Stephen C.O.U</h1>
-                <p>Church Management System</p>
-            </div>
-        </div>
-        
-        <div class="header-search">
-            <input type="text" placeholder="Search members...">
-            <button type="submit"><i class="fas fa-search"></i></button>
-        </div>
-        
-        <div class="user-actions">
-            <div class="notification-icon">
-                <i class="fas fa-bell"></i>
-                <span class="notification-badge">3</span>
-            </div>
-            
-            <div class="user-profile">
-                <div class="user-avatar" style="background-image: url('../public/images/user7.png');"></div>
-                <span class="user-name">Admin User</span>
-                <div class="user-dropdown">
-                    <a href="#"><i class="fas fa-user"></i> My Profile</a>
-                    <a href="#"><i class="fas fa-cog"></i> Settings</a>
-                    <a href="#" id="logout-btn"><i class="fas fa-sign-out-alt"></i> Logout</a>
-                </div>
-            </div>
-        </div>
-    </header>
+    <?php include 'header.php'; ?>
     
     <!-- Main Content -->
     <div class="main-container">
@@ -319,6 +292,12 @@
                     <a href="events.html" class="nav-link">
                         <i class="fas fa-calendar-alt"></i>
                         <span class="nav-text">Events</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="ministries" class="nav-link">
+                        <i class="fas fa-church"></i>
+                        <span class="nav-text">Ministries</span>
                     </a>
                 </div>
                 <div class="nav-item">
@@ -359,24 +338,35 @@
             <div class="stats-cards">
                 <div class="stat-card total">
                     <h3>Total Members</h3>
-                    <p>428</p>
+                    <p><?php
+                    $sql = "SELECT COUNT(*) as total FROM members";
+                    $result = $conn->query($sql);
+                    $data = $result->fetch_assoc();
+                    echo $data['total'];
+                    ?></p>
                 </div>
                 <div class="stat-card active">
                     <h3>Active Members</h3>
-                    <p>387</p>
+                    <p><?php
+                    $sql = "SELECT COUNT(*) as total FROM members WHERE is_active = 1";
+                    $result = $conn->query($sql);
+                    $data = $result->fetch_assoc();
+                    echo $data['total'];
+                    ?></p>
                 </div>
                 <div class="stat-card new">
                     <h3>New This Year</h3>
-                    <p>42</p>
-                </div>
-                <div class="stat-card families">
-                    <h3>Family Units</h3>
-                    <p>135</p>
+                    <p><?php
+                    $sql = "SELECT COUNT(*) as total FROM members WHERE YEAR(date_joined) = YEAR(CURDATE())";
+                    $result = $conn->query($sql);
+                    $data = $result->fetch_assoc();
+                    echo $data['total'];
+                    ?></p>
                 </div>
             </div>
             
             <div class="glass-card">
-                <div class="members-filters">
+                <!--<div class="members-filters">
                     <div class="filter-group">
                         <label>Member Status</label>
                         <select class="form-control">
@@ -416,120 +406,62 @@
                             <option>Last 5 Years</option>
                         </select>
                     </div>
-                </div>
+                </div>-->
                 
                 <table class="members-table">
                     <thead>
                         <tr>
                             <th>Member</th>
                             <th>Contact</th>
-                            <th>Ministry</th>
                             <th>Status</th>
                             <th>Join Date</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
+                        <?php
+                        // Fetch members from the database
+                        $sql = "SELECT * FROM members";
+                        $result = $conn->query($sql);
+                        if ($result->num_rows > 0) {
+                            
+                        while ($row = $result->fetch_assoc()) {
+                            ?>
                         <tr>
                             <td>
                                 <div class="member-info">
-                                    <div class="member-avatar" style="background-image: url('../public/images/user1.jpeg');"></div>
+                                    <div class="member-avatar" style="background-image: url('../public/images/<?php echo $row['profile_pic']; ?>');"></div>
                                     <div>
-                                        <strong>James Okello</strong>
-                                        <div style="font-size: 0.8rem; color: #666;">Member ID: MEM-001</div>
+                                        <strong><?php echo $row['first_name'] . ' ' . $row['last_name']; ?></strong>
+                                        <div style="font-size: 0.8rem; color: #666;">Member ID: <?php echo $row['id']; ?></div>
                                     </div>
                                 </div>
                             </td>
                             <td>
-                                <div>james@example.com</div>
-                                <div style="font-size: 0.8rem; color: #666;">+256 123 456 789</div>
+                                <div><?php echo $row['email']; ?></div>
+                                <div style="font-size: 0.8rem; color: #666;"><?php echo $row['phone']; ?></div>
                             </td>
-                            <td>Men's Fellowship</td>
-                            <td><span class="member-status active-member">Active</span></td>
-                            <td>Jan 2018</td>
+                            <td><span class="member-status active-member"><?php
+                            $active = $row['is_active'];
+                            if($active==1){
+                                echo "Active";
+                            }else{
+                                echo "Inactive";
+                            }
+                            ?></span></td>
+                            <td><?php echo $row['date_joined']; ?></td>
                             <td>
                                 <div class="member-actions">
                                     <button class="btn btn-sm"><i class="fas fa-edit"></i></button>
                                     <button class="btn btn-sm"><i class="fas fa-trash"></i></button>
-                                    <button class="btn btn-sm btn-accent"><i class="fas fa-eye"></i></button>
                                 </div>
                             </td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <div class="member-info">
-                                    <div class="member-avatar" style="background-image: url('../public/images/user2.jpeg');"></div>
-                                    <div>
-                                        <strong>Sarah Nalwoga</strong>
-                                        <div style="font-size: 0.8rem; color: #666;">Member ID: MEM-002</div>
-                                    </div>
-                                </div>
-                            </td>
-                            <td>
-                                <div>sarah@example.com</div>
-                                <div style="font-size: 0.8rem; color: #666;">+256 987 654 321</div>
-                            </td>
-                            <td>Women's Ministry</td>
-                            <td><span class="member-status active-member">Active</span></td>
-                            <td>Mar 2019</td>
-                            <td>
-                                <div class="member-actions">
-                                    <button class="btn btn-sm"><i class="fas fa-edit"></i></button>
-                                    <button class="btn btn-sm"><i class="fas fa-trash"></i></button>
-                                    <button class="btn btn-sm btn-accent"><i class="fas fa-eye"></i></button>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <div class="member-info">
-                                    <div class="member-avatar" style="background-image: url('../public/images/user3.jpeg');"></div>
-                                    <div>
-                                        <strong>David Opio</strong>
-                                        <div style="font-size: 0.8rem; color: #666;">Member ID: MEM-003</div>
-                                    </div>
-                                </div>
-                            </td>
-                            <td>
-                                <div>david@example.com</div>
-                                <div style="font-size: 0.8rem; color: #666;">+256 456 789 123</div>
-                            </td>
-                            <td>Youth Group</td>
-                            <td><span class="member-status active-member">Active</span></td>
-                            <td>Jun 2020</td>
-                            <td>
-                                <div class="member-actions">
-                                    <button class="btn btn-sm"><i class="fas fa-edit"></i></button>
-                                    <button class="btn btn-sm"><i class="fas fa-trash"></i></button>
-                                    <button class="btn btn-sm btn-accent"><i class="fas fa-eye"></i></button>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <div class="member-info">
-                                    <div class="member-avatar" style="background-image: url('../public/images/user4.jpeg');"></div>
-                                    <div>
-                                        <strong>Mary Akello</strong>
-                                        <div style="font-size: 0.8rem; color: #666;">Member ID: MEM-004</div>
-                                    </div>
-                                </div>
-                            </td>
-                            <td>
-                                <div>mary@example.com</div>
-                                <div style="font-size: 0.8rem; color: #666;">+256 789 123 456</div>
-                            </td>
-                            <td>Choir</td>
-                            <td><span class="member-status inactive-member">Inactive</span></td>
-                            <td>Sep 2021</td>
-                            <td>
-                                <div class="member-actions">
-                                    <button class="btn btn-sm"><i class="fas fa-edit"></i></button>
-                                    <button class="btn btn-sm"><i class="fas fa-trash"></i></button>
-                                    <button class="btn btn-sm btn-accent"><i class="fas fa-eye"></i></button>
-                                </div>
-                            </td>
-                        </tr>
+                        </tr>    
+                        <?php }
+                        } else {
+                            echo "<tr><td colspan='5'>No members found.</td></tr>";
+                        }
+                        ?>
                         <!-- More members would be listed here -->
                     </tbody>
                 </table>
@@ -567,34 +499,34 @@
                 <button class="close-modal">&times;</button>
             </div>
             <div class="modal-body">
-                <div class="member-tabs">
+                <!--<div class="member-tabs">
                     <div class="member-tab active" data-tab="personal">Personal Info</div>
                     <div class="member-tab" data-tab="spiritual">Spiritual Info</div>
                     <div class="member-tab" data-tab="family">Family Info</div>
-                </div>
+                </div>-->
                 
-                <form id="member-form">
+                <form id="" action="../includes/functions.php" method="POST">
                     <!-- Personal Info Tab -->
                     <div class="tab-content active" id="personal-tab">
                         <div class="form-row">
                             <div class="form-group">
                                 <label>First Name</label>
-                                <input type="text" class="form-control" required>
+                                <input name="first_name" type="text" class="form-control" required>
                             </div>
                             <div class="form-group">
                                 <label>Last Name</label>
-                                <input type="text" class="form-control" required>
+                                <input name="last_name" type="text" class="form-control" required>
                             </div>
                         </div>
                         
                         <div class="form-row">
                             <div class="form-group">
-                                <label>Date of Birth</label>
-                                <input type="date" class="form-control">
+                                <label>Profile Picture</label>
+                                <input name="profile_pic" type="file" class="form-control">
                             </div>
                             <div class="form-group">
                                 <label>Gender</label>
-                                <select class="form-control" required>
+                                <select name="gender" class="form-control" required>
                                     <option value="">Select gender</option>
                                     <option value="male">Male</option>
                                     <option value="female">Female</option>
@@ -606,39 +538,37 @@
                         <div class="form-row">
                             <div class="form-group">
                                 <label>Email</label>
-                                <input type="email" class="form-control">
+                                <input name="email" type="email" class="form-control">
                             </div>
                             <div class="form-group">
                                 <label>Phone</label>
-                                <input type="tel" class="form-control" required>
+                                <input name="phone" type="tel" class="form-control" required>
                             </div>
                         </div>
                         
                         <div class="form-group">
                             <label>Address</label>
-                            <textarea class="form-control" rows="3"></textarea>
+                            <input name="address" type="text" class="form-control">
                         </div>
                         
                         <div class="form-row">
                             <div class="form-group">
-                                <label>Occupation</label>
-                                <input type="text" class="form-control">
+                                <label>Date joined</label>
+                                <input name="date_joined" type="date" class="form-control">
                             </div>
                             <div class="form-group">
-                                <label>Marital Status</label>
-                                <select class="form-control">
-                                    <option value="">Select status</option>
-                                    <option value="single">Single</option>
-                                    <option value="married">Married</option>
-                                    <option value="divorced">Divorced</option>
-                                    <option value="widowed">Widowed</option>
-                                </select>
+                                <label>Create password</label>
+                                <input name="password" type="password" class="form-control">
+                            </div>
+                            <div class="form-group">
+                                <label>Confirm password</label>
+                                <input name="confirm_password" type="password" class="form-control">
                             </div>
                         </div>
                     </div>
                     
                     <!-- Spiritual Info Tab -->
-                    <div class="tab-content" id="spiritual-tab">
+                    <!--<div class="tab-content" id="spiritual-tab">
                         <div class="form-row">
                             <div class="form-group">
                                 <label>Membership Status</label>
@@ -686,10 +616,10 @@
                             <label>Spiritual Gifts</label>
                             <textarea class="form-control" rows="3" placeholder="List any known spiritual gifts"></textarea>
                         </div>
-                    </div>
+                    </div>-->
                     
                     <!-- Family Info Tab -->
-                    <div class="tab-content" id="family-tab">
+                    <!--<div class="tab-content" id="family-tab">
                         <div class="form-group">
                             <label>Family Unit</label>
                             <select class="form-control">
@@ -723,13 +653,13 @@
                                 <input type="text" class="form-control" placeholder="Relationship to member">
                             </div>
                         </div>
-                    </div>
-                </form>
+                    </div>-->
+               
             </div>
             <div class="modal-footer">
                 <button class="btn" id="cancel-member">Cancel</button>
-                <button class="btn btn-accent" id="save-member">Save Member</button>
-            </div>
+                <button type="submit" name="register1" class="btn btn-accent" id="">Save Member</button>
+            </div> </form>
         </div>
     </div>
     

@@ -1,5 +1,6 @@
 <?php
 session_start();
+include_once 'config/db.php';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -161,11 +162,11 @@ session_start();
                 <li><a href="logout" class="login-btn">Logout</a></li>
                 ';
             } elseif (isset($_SESSION['clergy']) && $_SESSION['clergy'] === true) {
-                echo '<li><a href="clergy-dashboard" class="dashboard-btn">My Dashboard</a></li>
+                echo '
                 <li><a href="logout" class="login-btn">Logout</a></li>
                 ';
             } elseif (isset($_SESSION['member']) && $_SESSION['member'] === true) {
-                echo '<li><a href="member-dashboard" class="dashboard-btn">My Dashboard</a></li>
+                echo '
                 <li><a href="logout" class="login-btn">Logout</a></li>
                 ';
             } else {
@@ -247,56 +248,26 @@ session_start();
             <p class="section-subtitle">Meet the dedicated team guiding our spiritual journey</p>
             
             <div class="leaders-grid">
-                <div class="leader-card glass-card">
-                    <div class="leader-img" style="background-image: url('public/images/user3.jpeg');"></div>
-                    <div class="leader-info">
-                        <h4>Rev. Sarah Nakalema</h4>
-                        <p>Senior Pastor</p>
+                <?php
+                $leaders= 'SELECT * FROM users WHERE role = "clergy" ORDER BY id ASC';
+                $leaders_result = mysqli_query($conn, $leaders);
+                while($leader = mysqli_fetch_assoc($leaders_result)) {
+                    ?>
+                    <div class="leader-card glass-card">
+                        <div class="leader-img" style="background-image: url('public/images/user-logo.jpg');border-radius: 50%;height: 150px;width: 150px;"></div>
+                        <div class="leader-info">
+                            <h4><?php echo $leader['name']; ?> </h4>
+                        <p><?php echo $leader['role']; ?></p>
                         <div class="leader-social">
                             <a href="#"><i class="fab fa-facebook"></i></a>
                             <a href="#"><i class="fab fa-twitter"></i></a>
                             <a href="#"><i class="fas fa-envelope"></i></a>
                         </div>
+                    </div> 
                     </div>
-                </div>
-                
-                <div class="leader-card glass-card">
-                    <div class="leader-img" style="background-image: url('public/images/user1.jpeg');"></div>
-                    <div class="leader-info">
-                        <h4>Elder Joseph Okello</h4>
-                        <p>Chairman, Church Council</p>
-                        <div class="leader-social">
-                            <a href="#"><i class="fab fa-facebook"></i></a>
-                            <a href="#"><i class="fab fa-twitter"></i></a>
-                            <a href="#"><i class="fas fa-envelope"></i></a>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="leader-card glass-card">
-                    <div class="leader-img" style="background-image: url('public/images/user2.jpeg');"></div>
-                    <div class="leader-info">
-                        <h4>Deaconess Grace Amono</h4>
-                        <p>Women's Ministry Leader</p>
-                        <div class="leader-social">
-                            <a href="#"><i class="fab fa-facebook"></i></a>
-                            <a href="#"><i class="fab fa-twitter"></i></a>
-                            <a href="#"><i class="fas fa-envelope"></i></a>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="leader-card glass-card">
-                    <div class="leader-img" style="background-image: url('public/images/user4.jpeg');"></div>
-                    <div class="leader-info">
-                        <h4>Pastor David Opio</h4>
-                        <p>Youth Ministry Pastor</p>
-                        <div class="leader-social">
-                            <a href="#"><i class="fab fa-facebook"></i></a>
-                            <a href="#"><i class="fab fa-twitter"></i></a>
-                            <a href="#"><i class="fas fa-envelope"></i></a>
-                        </div>
-                    </div>
+                    <?php
+                }
+                ?>
                 </div>
             </div>
         </div>

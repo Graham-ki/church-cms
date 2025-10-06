@@ -262,11 +262,11 @@ session_start();
                 <li><a href="logout" class="login-btn">Logout</a></li>
                 ';
             } elseif (isset($_SESSION['clergy']) && $_SESSION['clergy'] === true) {
-                echo '<li><a href="clergy-dashboard" class="dashboard-btn">My Dashboard</a></li>
+                echo '
                 <li><a href="logout" class="login-btn">Logout</a></li>
                 ';
             } elseif (isset($_SESSION['member']) && $_SESSION['member'] === true) {
-                echo '<li><a href="member-dashboard" class="dashboard-btn">My Dashboard</a></li>
+                echo '
                 <li><a href="logout" class="login-btn">Logout</a></li>
                 ';
             } else {
@@ -365,9 +365,9 @@ session_start();
                 </div>
             </div>
             
-            <div class="map-container glass-card">
+            <!--<div class="map-container glass-card">
                 <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3989.7526223157563!2d33.93661531532693!d3.123456789012345!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zM8KwMDcnMjQuNSJOIDMzwKw1NCc0OC4xIkU!5e0!3m2!1sen!2sug!4v1620000000000!5m2!1sen!2sug" allowfullscreen="" loading="lazy"></iframe>
-            </div>
+            </div>-->
             
             <div class="office-hours glass-card" style="padding: 30px; margin-top: 40px;">
                 <h3 class="section-title" style="font-size: 1.5rem; text-align: center;">Church Office Hours</h3>
@@ -405,7 +405,7 @@ session_start();
         </div>
     </section>
 
-    <!-- Staff Contacts -->
+    <!-- Staff Contacts 
     <section class="staff-contacts">
         <div class="container">
             <h2 class="section-title">Key Staff Contacts</h2>
@@ -453,7 +453,7 @@ session_start();
                 </div>
             </div>
         </div>
-    </section>
+    </section>-->
 
     <!-- Footer -->
     <footer class="glass-footer">
